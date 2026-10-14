@@ -1,1 +1,305 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>HMWK 2 — From wallet seed to Ethereum address (interactive)</title>
+<style>
+:root{--t:#0b7f86;--td:#075e66;--v:#7a5bc4;--v1:#f4effc;--v2:#e8def9;--v3:#d3c3f2;--ink:#271a45;--mut:#6b5a8c;--hot:#d6336c;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;color:var(--ink);line-height:1.55;background:linear-gradient(165deg,#fff 0%,#f6f1fd 45%,#e6dbf8 100%) fixed}
+code{color:var(--td)}.w{max-width:980px;margin:auto;padding:0 16px}
+header{background:linear-gradient(135deg,#075e66,#5b46a8);color:#fff;padding:34px 0 28px}
+h1{margin:0 0 6px;font-size:clamp(1.7rem,5vw,2.7rem)}h2{margin:0 0 10px;color:var(--td)}h3{margin:16px 0 6px;color:var(--td);font-size:1.05rem}
+section{padding:26px 0;border-bottom:1px solid var(--v3);scroll-margin-top:12px}
+.eq{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.box{background:#fff;color:var(--ink);border-radius:10px;padding:6px 12px;border:1px solid var(--v3);font:600 .95rem ui-monospace,Menlo,monospace}
+.box small{display:block;font:600 .62rem system-ui;letter-spacing:.1em;text-transform:uppercase;color:var(--mut)}
+.card{background:rgba(255,255,255,.88);border:1px solid var(--v3);border-radius:12px;padding:14px 16px;margin:12px 0}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+input,select,button,textarea{font:inherit;padding:7px 11px;border-radius:8px;border:1px solid var(--v3);background:#fff;color:var(--ink)}
+textarea,input.hex{font-family:ui-monospace,Menlo,monospace;font-size:.85rem;width:100%}
+button{cursor:pointer;background:var(--v2)}button:hover{background:var(--v3)}button.p{background:var(--t);border-color:var(--t);color:#fff;font-weight:600}button:disabled{opacity:.55;cursor:wait}
+table{border-collapse:collapse;width:100%;font-size:.88rem}td,th{border-bottom:1px solid var(--v3);padding:6px 8px;text-align:left;vertical-align:top}th{color:var(--td)}
+td.mono{font:.76rem ui-monospace,Menlo,monospace;word-break:break-all}
+.note{color:var(--mut);font-size:.88rem}.yes{color:var(--td);font-weight:600}.no{color:var(--hot);font-weight:600}
+.tag{display:inline-block;padding:1px 8px;border-radius:99px;background:var(--v2);font-size:.75rem;font-weight:600;color:var(--ink)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:12px}
+svg{max-width:100%;height:auto;background:#fff;border-radius:10px;border:1px solid var(--v3);display:block;width:100%}
+.ax{stroke:var(--mut)}.gr{stroke:#eee7fa}.lb{font-size:10px;fill:var(--mut)}.bar{fill:var(--t);opacity:.85}.ex{fill:none;stroke:var(--hot);stroke-width:2}
+.dot{fill:var(--v)}.dot.out{fill:var(--hot)}.band{fill:var(--v1)}.ev{cursor:pointer;outline:none}.ev:focus circle,.ev:hover circle{stroke:var(--ink);stroke-width:3}
+.hl{background:#ffe3ec;border-radius:3px}
+.toc{position:fixed;top:14px;right:14px;width:250px;max-width:calc(100vw - 28px);max-height:calc(100vh - 28px);overflow:auto;background:rgba(255,255,255,.96);border:1px solid var(--t);border-radius:12px;box-shadow:0 8px 28px rgba(60,30,120,.2);z-index:10}
+.toc summary{cursor:pointer;padding:10px 14px;list-style:none}.toc summary::-webkit-details-marker{display:none}
+.toc h2{display:inline;font-size:1rem;margin:0}.toc summary::after{content:"▾";float:right;color:var(--mut)}.toc:not([open]) summary::after{content:"▸"}
+.toc ol{list-style:none;margin:0;padding:0 8px 10px}.toc a{display:block;padding:5px 8px;border-radius:7px;color:var(--ink);text-decoration:none;font-size:.88rem}.toc a:hover{background:var(--v2)}
+.toc b{color:var(--t);display:inline-block;min-width:2em}
+@media(min-width:1380px){.w{margin-left:max(16px,calc(50% - 600px))}}
+@media(max-width:700px){.toc{position:static;margin:8px;width:auto}}
+#eg{display:flex;flex-wrap:wrap;gap:3px;margin-top:8px}.cell{display:flex;flex-direction:column;align-items:center;width:26px;border:1px solid var(--v3);border-radius:6px;background:#fff;font:.78rem ui-monospace,Menlo,monospace}.cell i{color:var(--mut);font-style:normal;border-top:1px dashed var(--v3);width:100%;text-align:center}.cell.up{border-color:var(--hot)}.cell.up b{color:var(--hot)}
+.warn{background:#fff3f6;border:1px solid var(--hot);border-radius:10px;padding:8px 12px;font-size:.88rem}details.d summary{cursor:pointer;color:var(--td);font-weight:600;margin:6px 0}ol.ck li{margin:6px 0}
+</style>
+<details class="toc" open><summary><h2>Contents</h2></summary><ol>
+<li><a href="#s1"><b>§1</b>Task &amp; vocabulary</a></li><li><a href="#s2"><b>§2</b>Live pipeline &amp; wallet lab</a></li>
+<li><a href="#s3"><b>§3</b>Roles of the primitives</a></li><li><a href="#s4"><b>§4</b>Chart 1 · Timeline</a></li>
+<li><a href="#s5"><b>§5</b>Keccak vs SHA-3 vs SHA-2</a></li><li><a href="#s6"><b>§6</b>Chart 2 · Avalanche</a></li>
+<li><a href="#s7"><b>§7</b>Charts 3-5 · Address statistics</a></li><li><a href="#s8"><b>§8</b>EIP-55 validator</a></li>
+<li><a href="#s9"><b>§9</b>Chart 6 · Seed entropy</a></li><li><a href="#s10"><b>§10</b>Why many primitives</a></li><li><a href="#s11"><b>§11</b>Real-wallet notes</a></li><li><a href="#s12"><b>§12</b>Checksum robustness</a></li><li><a href="#s13"><b>§13</b>Answers &amp; synthesis</a></li></ol></details>
+<header><div class="w"><h1>From wallet seed to Ethereum address</h1>
+<div>Mnemonic → BIP-39 → BIP-32/44 → secp256k1 → Keccak-256 → EIP-55 — everything below is computed live in your browser</div>
+<div class="eq"><div class="box"><small>path</small>m/44'/60'/0'/0/i</div><div class="box"><small>curve</small>y² = x³ + 7 (secp256k1)</div><div class="box"><small>hash</small>Keccak-256</div></div></div></header>
+<main class="w">
 
+<section id="s1"><h2>§1 · Task and vocabulary</h2>
+<p>A wallet turns a human-readable mnemonic into an Ethereum address through a chain of <i>different</i> primitives. Each answers a different question, so it helps to keep the five notions apart:</p>
+<table><tr><th>Notion</th><th>In the pipeline</th><th>Key property</th><th>Secret input?</th><th>Reversible?</th></tr>
+<tr><td><b>Key generation</b></td><td>Random entropy (128–256 bit) → mnemonic. The only place where fresh randomness enters.</td><td>Unpredictability</td><td>No (fresh randomness)</td><td>n/a</td></tr>
+<tr><td><b>Key derivation</b></td><td>PBKDF2 (mnemonic→seed), HMAC-SHA512 (seed→master, parent→child). Deterministic: same input, same keys.</td><td>Reproducibility, key separation</td><td>Yes</td><td>No: only whoever has the input can recompute</td></tr>
+<tr><td><b>Public-key cryptography</b></td><td>secp256k1: Q = k·G. Easy forward, infeasible backward (ECDLP); also gives signatures.</td><td>One-way + signature</td><td>Yes (private key)</td><td>No (discrete log)</td></tr>
+<tr><td><b>Hashing</b></td><td>Keccak-256 of the 64-byte public key; the address is its last 20 bytes.</td><td>Fixed size, avalanche, preimage resistance</td><td>No</td><td>No</td></tr>
+<tr><td><b>Checksum</b></td><td>EIP-55: the hash of the address decides which letters are uppercase.</td><td>Detects typos (not an attack defence)</td><td>No</td><td>Recomputed, not reversed</td></tr>
+<tr><td><b>Encoding</b></td><td>Word list (11 bit/word), hex, mixed-case hex. Reversible, no secrecy.</td><td>Representation only</td><td>No</td><td>Yes, by anyone</td></tr></table><h3>Every operation of the pipeline, classified</h3>
+<table><tr><th>Operation</th><th>Kind</th><th>Why</th></tr>
+<tr><td>128–256 random bits from the OS random number generator</td><td><span class="tag">key generation</span></td><td>the only place where fresh randomness enters</td></tr>
+<tr><td>PBKDF2-HMAC-SHA512 (2048 rounds) on the mnemonic</td><td><span class="tag">key derivation</span></td><td>deterministic, needs a secret input</td></tr>
+<tr><td>HMAC-SHA512 from parent key + chain code to child key (CKD)</td><td><span class="tag">key derivation</span></td><td>same inputs, same child; key separation</td></tr>
+<tr><td>Q = k·G on secp256k1</td><td><span class="tag">public-key cryptography</span></td><td>easy forward, infeasible backward</td></tr>
+<tr><td>ECDSA signature of a transaction</td><td><span class="tag">public-key cryptography</span></td><td>made with k, verified with Q</td></tr>
+<tr><td>Keccak-256 of x‖y, keep the last 20 bytes</td><td><span class="tag">hashing</span></td><td>keyless, one-way, fixed size</td></tr>
+<tr><td>Last 4 bits of a 12-word phrase (SHA-256 of the entropy)</td><td><span class="tag">checksum</span></td><td>redundancy that detects typos</td></tr>
+<tr><td>Upper-casing address letters where the hash digit is ≥ 8</td><td><span class="tag">checksum</span></td><td>EIP-55 hides a checksum in the letter case</td></tr>
+<tr><td>Cutting bits into 11-bit groups and mapping them to words</td><td><span class="tag">encoding</span></td><td>reversible by anyone, no secrecy</td></tr>
+<tr><td>Writing 20 bytes as <code>0x…</code> hexadecimal</td><td><span class="tag">encoding</span></td><td>representation only</td></tr></table></section>
+
+<section id="s2"><h2>§2 · Chart 0 — Live pipeline and real-wallet lab</h2>
+<p>Edit the mnemonic, passphrase or address index and watch every stage change. Seed: PBKDF2-HMAC-SHA512 (2048 rounds) from WebCrypto; HMAC-SHA512 for BIP-32; secp256k1 and Keccak-256 are implemented in this page with <code>BigInt</code>. The default phrase is the well-known test vector (expected address <code>0x9858EfFD…aEda94</code>).</p>
+<div class="card"><p class="warn">⚠ Learning tool only. Use the public test phrase and a fresh, empty wallet or test profile; never type a real recovery phrase into a web page and never use a phrase generated here. Anything sent to the test addresses is lost.</p><textarea id="mn" rows="2">abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about</textarea>
+<div class="row" style="margin-top:8px"><label>passphrase <input id="pp" size="14"></label><label>index i <input id="ix" value="0" size="3" inputmode="numeric"></label><button class="p" id="run">Derive</button><button id="g12">Generate 12 words</button><button id="g24">Generate 24 words</button><button id="tp">Test phrase</button></div><div id="b39"></div>
+<div class="sc" style="overflow-x:auto"><table id="pipe"></table></div><h3>First addresses of this phrase (BIP-44, coin type 60)</h3><div style="overflow-x:auto"><table id="five"></table></div>
+<p class="note">Now the BIP-39 checksum <i>is</i> checked (above), but the seed only needs the exact text: a wrong word gives a checksum warning in a real wallet, while here it silently yields a <i>different, valid-looking</i> wallet. Different passphrase → unrelated wallet, never an error.</p><p class="note">To compare with a real wallet (MetaMask, Rabby, Exodus…) import the test phrase and check the addresses above; see §11.</p></div></section>
+
+<section id="s3"><h2>§3 · Role of each standard and primitive</h2>
+<table><tr><th>Piece</th><th>Role / purpose</th></tr>
+<tr><td><b>BIP-39</b></td><td>Encodes 128–256 bits of entropy + a checksum (ENT/32 bits) as 12–24 words from a 2048-word list, then stretches it to a 512-bit seed with PBKDF2-HMAC-SHA512 (salt <code>"mnemonic"+passphrase</code>). The passphrase gives a "25th word".</td></tr>
+<tr><td><b>BIP-32</b></td><td>Hierarchical deterministic tree: <code>HMAC-SHA512("Bitcoin seed", seed)</code> → master key + chain code; child keys via CKD, hardened (<code>i ≥ 2³¹</code>, uses the parent private key) or normal (uses the parent public key). One backup, unlimited keys.</td></tr>
+<tr><td><b>BIP-44</b></td><td>Fixes the tree layout <code>m / purpose' / coin_type' / account' / change / address_index</code>. Ethereum: coin type 60 → <code>m/44'/60'/0'/0/0</code>, so different wallets recover the same accounts.</td></tr>
+<tr><td><b>secp256k1</b></td><td>Curve y² = x³ + 7 over F<sub>p</sub>, p = 2²⁵⁶ − 2³² − 977, base point G of prime order n ≈ 2²⁵⁶. Public key Q = kG; ECDSA signatures prove ownership of k without revealing it.</td></tr>
+<tr><td><b>Keccak-256</b></td><td>Compresses the 64-byte public key (x‖y, no <code>04</code> prefix) into 32 bytes; the address is the last 20 bytes. Hashing hides nothing of k, it just yields a short, uniform identifier.</td></tr>
+<tr><td><b>EIP-55</b></td><td>Hex digit i of the address is uppercased if letter and nibble i of Keccak-256(lowercase address) is ≥ 8. Costs no extra characters, detects typos with probability ≈ 1 − 2<sup>−15</sup>.</td></tr></table></section>
+
+<section id="s4"><h2>§4 · Chart 1 — Chronological context</h2>
+<p>Click (or focus) a point. Colours: <span style="color:#0b7f86">■ public key</span>, <span style="color:#7a5bc4">■ hash</span>, <span style="color:#d6336c">■ wallet / Ethereum standards</span>.</p>
+<div class="card"><svg id="tl" viewBox="0 0 700 250" role="img" aria-label="Timeline 1977-2016"></svg><p id="tld" class="note" aria-live="polite">Select an event.</p></div></section>
+
+<section id="s5"><h2>§5 · Keccak-256 vs SHA3-256 vs SHA-2</h2>
+<p><b>SHA-2/SHA-512</b> (2001) is a Merkle–Damgård design with a compression function; BIP-39 and BIP-32 use it through PBKDF2/HMAC. <b>Keccak</b> is a sponge construction (rate 1088, capacity 512 for the 256-bit variant) that won the NIST SHA-3 competition in 2012. When NIST standardised <b>SHA-3 (FIPS 202, 2015)</b> it added domain-separation bits, changing the padding byte from <code>0x01</code> (original Keccak) to <code>0x06</code>. Ethereum had already adopted the original Keccak-256, so <b>Keccak-256 ≠ SHA3-256</b>, even though the permutation is identical.</p>
+<table><tr><th></th><th>SHA-2 (SHA-256/512)</th><th>Keccak / SHA-3</th></tr><tr><td>Construction</td><td>Merkle–Damgård (compression function block by block)</td><td>Sponge: absorb into a 1600-bit state, then squeeze</td></tr><tr><td>Standardised</td><td>2001–2002 (FIPS 180-2)</td><td>Contest winner 2012, FIPS 202 in 2015</td></tr><tr><td>Padding</td><td colspan="2">Keccak-256: <code>0x01…0x80</code> · SHA3-256: <code>0x06…0x80</code> — same permutation, different output</td></tr><tr><td>Length extension</td><td>Possible on plain SHA-256/512</td><td>Not possible</td></tr><tr><td>Role in the pipeline</td><td>SHA-256: BIP-39 checksum · SHA-512: PBKDF2, HMAC (seed, BIP-32)</td><td>Keccak-256: address and EIP-55</td></tr></table>
+<div class="card"><input class="hex" id="hin" value="" placeholder="type text (empty = empty string)"><table style="margin-top:8px" id="htab"></table></div></section>
+
+<section id="s6"><h2>§6 · Chart 2 — Avalanche effect (statistical property of hashing)</h2>
+<p>Flip one random input bit and count how many of the 256 output bits change. For a good hash the distance is Binomial(256, ½): mean 128, σ = 8. The red curve is that theory; the bars are your experiment.</p>
+<div class="card"><div class="row"><label>function <select id="af"><option value="k">Keccak-256</option><option value="s3">SHA3-256</option><option value="s2">SHA-256</option><option value="x">control: neighbour-XOR (not a hash)</option></select></label>
+<label>trials <input id="at" type="range" min="200" max="3000" step="100" value="1000"> <span id="atv">1000</span></label><button class="p" id="ab">Run</button></div>
+<svg id="c2" viewBox="0 0 640 250"></svg><p class="note" id="c2n"></p></div></section>
+
+<section id="s7"><h2>§7 · Charts 3–5 — Statistics of generated addresses</h2>
+<p>Generate N random private keys and run the <i>whole</i> secp256k1 → Keccak-256 → EIP-55 pipeline. A good pipeline should give addresses that look like uniform random 160-bit strings.</p>
+<div class="card"><div class="row"><label>N <input id="nn" type="range" min="100" max="1000" step="50" value="300"> <span id="nnv">300</span></label><button class="p" id="gen">Generate</button><span class="note" id="gst"></span></div>
+<h3>Chart 3 · Frequency of 1 at each of the 160 address bits (expected ½, band ±3σ, σ = ½/√N)</h3><svg id="c3" viewBox="0 0 640 250"></svg><p class="note" id="c3n"></p>
+<div class="grid"><div><h3>Chart 4 · Hex-digit histogram (40·N nibbles)</h3><svg id="c4" viewBox="0 0 640 250"></svg><p class="note" id="c4n"></p></div>
+<div><h3>Chart 5 · Letters (a–f) per address = EIP-55 check bits</h3><svg id="c5" viewBox="0 0 640 250"></svg><p class="note" id="c5n"></p></div></div>
+<table id="samp" style="margin-top:10px"></table></div></section>
+
+<section id="s8"><h2>§8 · EIP-55 checksum validator</h2>
+<div class="card"><input class="hex" id="ea" value="0x9858EfFD232B4033E47d90003D41EC34EcaEda94"><p id="eo"></p><div id="eg"></div>
+<p class="note">Try changing the case of one letter, or one digit: the checksum is a function of the address's own hash, so a typo flips about half of the case bits and is almost surely caught. An all-lowercase address is valid but carries no protection.</p></div></section>
+
+<section id="s9"><h2>§9 · Chart 6 — How much entropy do the seed phrases carry?</h2>
+<p>Expected brute-force time = 2<sup>bits−1</sup> / (guesses per second). Bars show log₁₀(years); the red line is the age of the universe (≈1.4·10¹⁰ y). Note that the 256-bit private key only offers ≈128 bit of security against ECDLP attacks, so 12 words already match it.</p>
+<div class="card"><label>guesses/s = 10^<input id="gr" type="range" min="3" max="18" value="12"> <b id="grv">12</b></label><svg id="c6" viewBox="0 0 640 250"></svg></div></section>
+
+<section id="s10"><h2>§10 · Why not one single algorithm?</h2>
+<p>Because the steps need <i>incompatible</i> properties: <b>BIP-39/32/44</b> need deterministic, key-separating derivation and a recoverable layout (a KDF/MAC is enough, no algebra); <b>secp256k1</b> needs an algebraic one-way map with a public/private structure that supports signatures — a hash cannot sign; <b>Keccak-256</b> needs to be a short, uniform, collision-resistant identifier of an arbitrary-size input (curve points are not uniform, Chart 3–5); <b>EIP-55</b> only needs to detect human errors cheaply, and is useless against adversaries. Each layer also shields the previous: the address hides the public key until the first spend, the seed hides all keys, the passphrase hides the seed. Chronologically they were designed separately (1977 → 2016) by different communities and composed rather than redesigned.</p>
+<table><tr><th>Piece</th><th>Problem</th><th>Needs</th><th>Why the others cannot do it</th></tr>
+<tr><td>BIP-39/32/44</td><td>Back up and organise many keys</td><td>Determinism, human-sized backup, fixed layout</td><td>Conventions built from SHA-256, HMAC, PBKDF2; curve or hash alone has no tree</td></tr>
+<tr><td>secp256k1</td><td>Prove control of an address</td><td>Asymmetric pair + signatures</td><td>A hash has no key pair and cannot verify a signature</td></tr>
+<tr><td>Keccak-256</td><td>Short uniform identifier</td><td>One-way, fixed size, avalanche</td><td>Curve points have algebraic structure and are not uniform</td></tr>
+<tr><td>EIP-55</td><td>Catch typos</td><td>Error detection without changing the 20 bytes</td><td>A hash has no place in the address to sit: the letter case is free storage</td></tr></table>
+<p class="note">Separation is also a safety property: a flaw in one primitive hurts only its own job (a wrong checksum exposes no key).</p></section>
+
+<section id="s11"><h2>§11 · Real-wallet observations</h2>
+<div class="card"><h3>Osservazioni dal wallet reale (MetaMask/Rabby/Exodus)</h3>
+<ul>
+<li>Ho importato la frase di test in … e ho visto che …</li>
+<li>Con la passphrase "hello" l'indirizzo cambia in …</li>
+<li>…</li>
+</ul></div></section>
+
+<section id="s12"><h2>§12 · Checksum robustness</h2>
+<p>Break phrases and addresses on purpose and count how often the checksum still passes: a checksum with <i>c</i> bits misses an accidental error with probability ≈ 2<sup>−c</sup>.</p>
+<div class="card"><div class="row"><label>trials <select id="ct"><option>500</option><option selected>2000</option><option>5000</option></select></label><button class="p" id="cb">Run</button><span class="note" id="cs"></span></div><table id="ctab" style="margin-top:8px"></table></div>
+</section>
+
+<section id="s13"><h2>§13 · Answers to the assignment</h2>
+<p><b>Pipeline.</b> entropy → mnemonic (BIP-39) → seed → master key → <code>m/44'/60'/0'/0/i</code> (BIP-32/44) → private key <i>k</i> → <i>Q = k·G</i> (secp256k1) → Keccak-256(x‖y), last 20 bytes → address → EIP-55 → checksummed address.</p>
+<h3>1 · Role and purpose</h3>
+<table><tr><th>Piece</th><th>Role</th><th>Purpose</th></tr>
+<tr><td><b>BIP-39</b></td><td>Entropy + checksum ↔ 12–24 words; words → 512-bit seed (PBKDF2-HMAC-SHA512)</td><td>A backup a person can write down and check, valid in every wallet</td></tr>
+<tr><td><b>BIP-32</b></td><td>Seed → tree of private keys and chain codes with HMAC-SHA512</td><td>One backup for unlimited keys; public keys without private keys</td></tr>
+<tr><td><b>BIP-44</b></td><td>Gives the tree levels a meaning: purpose, coin type (60), account, change, index</td><td>Two wallets find the same accounts from the same phrase</td></tr>
+<tr><td><b>secp256k1</b></td><td>Private key <i>k</i> → public key <i>Q = k·G</i>; ECDSA signatures</td><td>Prove ownership without revealing <i>k</i></td></tr>
+<tr><td><b>Keccak-256</b></td><td>Hash of the 64-byte public key, keep 20 bytes</td><td>Short, uniform, irreversible identifier of the key</td></tr>
+<tr><td><b>EIP-55</b></td><td>Letter case of the address encodes a hash-based checksum</td><td>Catch typos without changing the 20 bytes</td></tr></table>
+<h3>2 · Six notions, one line each</h3>
+<table><tr><th>Notion</th><th>Answer</th></tr>
+<tr><td><b>Key generation</b></td><td>Creates new randomness, once, at the start (the entropy behind the mnemonic). Nothing earlier determines it.</td></tr>
+<tr><td><b>Key derivation</b></td><td>Deterministic: from an existing secret plus context the same keys always come out (PBKDF2, HMAC, CKD).</td></tr>
+<tr><td><b>Public-key cryptography</b></td><td>Key pair with a one-way link <i>k → Q</i>; gives signatures (secp256k1).</td></tr>
+<tr><td><b>Hashing</b></td><td>Any input → fixed-size digest; no key, no secret, one-way (Keccak-256, SHA-256/512).</td></tr>
+<tr><td><b>Checksum</b></td><td>A few redundant bits that reveal accidental errors; not secret, no defence against an attacker (BIP-39 last bits, EIP-55).</td></tr>
+<tr><td><b>Encoding</b></td><td>Same information, different representation; reversible by anyone (words, hex, <code>0x</code>, letter case).</td></tr></table>
+<h3>3 · Statistical properties</h3>
+<table><tr><th>Step</th><th>Avalanche</th><th>Uniform output</th><th>Property (where measured)</th></tr>
+<tr><td>BIP-39 entropy</td><td>—</td><td>Yes, if the RNG is good</td><td>128–256 uniform bits; brute force needs ≈ 2<sup>bits−1</sup> tries (§9)</td></tr>
+<tr><td>PBKDF2 / HMAC-SHA512</td><td>Required</td><td>Required</td><td>Seed looks random; another passphrase gives an unrelated seed (§2)</td></tr>
+<tr><td>secp256k1</td><td>Not a goal</td><td>Not a goal</td><td>Security = discrete-log hardness (≈ 2<sup>128</sup> steps); coordinates only look random (§7)</td></tr>
+<tr><td>Keccak-256</td><td>Required</td><td>Required</td><td>1 flipped bit changes Binomial(256, ½) bits: mean 128, σ = 8 (§6); address bits and hex digits uniform (§7)</td></tr>
+<tr><td>BIP-39 words</td><td>No, on purpose</td><td>If the entropy is</td><td>11 bits ↔ 1 word; checksum misses an error with probability 2<sup>−4</sup> for 12 words (§12)</td></tr>
+<tr><td>EIP-55</td><td>—</td><td>—</td><td>≈ 15 check bits (letters ~ Binomial(40, 6/16)), miss ≈ 2<sup>−15</sup> (§7, §12)</td></tr></table>
+<h3>4 · Synthesis</h3>
+<p><b>Chronology.</b> RSA (1977) → SHA-2 (2001) → BIP-32 (2012) → BIP-39 (2013) → BIP-44 (2014) → SHA-3 (2015) → EIP-55 (2016): the mathematical tools are old, the wallet standards are young (§4).</p>
+<p><b>SHA-2 vs Keccak.</b> SHA-2 is Merkle–Damgård, Keccak/SHA-3 is a sponge. Ethereum uses the original Keccak-256 (padding <code>0x01</code>), not the standardised SHA3-256 (<code>0x06</code>): same permutation, different digest (§5).</p>
+<p><b>Why several techniques.</b> Each step needs a different property: BIP-39/32/44 deterministic, recoverable key management; secp256k1 a key pair with signatures; Keccak-256 a short uniform irreversible identifier; EIP-55 cheap error detection. No single algorithm has all of them, and separation limits the damage of a flaw in one piece (§10).</p>
+<h3>5 · Osservazioni dalle prove</h3>
+<ul>
+<li><b>Avalanche (§6).</b> Con 200, 1000 e 3000 prove Keccak-256, SHA3-256 e SHA-256 danno sempre una media ≈ 128 bit (da 127,4 a 128,6) e σ ≈ 8 (da 7,4 a 8,3): più prove riducono solo il rumore. Keccak e SHA3-256 sono statisticamente indistinguibili, cambia solo il digest. Il controllo XOR cambia sempre esattamente 2 bit (σ = 0): non è un hash.</li>
+<li><b>Indirizzi (§7).</b> Con N = 100, 300 e 1000 nessun bit su 160 esce da ±3σ (ne attendevo ≈ 0,4), χ² = 9,7 / 12,1 / 14,1 (sempre sotto 25) e le lettere medie sono ≈ 14,9 (attese 15). Aumentando N la banda si stringe (σ = 0,5/√N: da 0,050 a 0,016) e gli indirizzi restano compatibili con stringhe uniformi.</li>
+<li><b>Checksum (§12).</b> Con 500, 2000 e 5000 prove BIP-39 accetta circa il 6 % degli errori (parola cambiata 5,9–6,5 %, due parole scambiate 6,0–7,0 %), vicino a 1/16 = 6,25 % (4 bit). EIP-55 con una cifra sbagliata: 0 su 500, 0 su 2000, 1 su 5000 (atteso ≈ 2<sup>−15</sup>, cioè ≈ 0,15 casi); un solo cambio di maiuscola non passa mai (0 su 5000). Il checksum dell'indirizzo protegge circa 2000 volte meglio di quello della frase, ma un indirizzo tutto minuscolo non protegge affatto.</li>
+<li><b>Entropia (§9).</b> A 10<sup>3</sup> tentativi/s 12 parole richiedono 10<sup>27,7</sup> anni; anche a 10<sup>18</sup>/s restano 10<sup>12,7</sup> anni, più dell'età dell'universo (10<sup>10,15</sup>). Da 12 a 24 parole la barra cresce di circa 38 ordini di grandezza, ma oltre 128 bit il limite è la curva: 12 parole bastano già.</li>
+<li><b>Pipeline (§2).</b> La frase di test dà 0x9858… (i = 0), 0x6Fac… (i = 1), 0xb671… (i = 2): nessuna relazione visibile tra gli indirizzi. Lo stesso indice 1 in stile Ledger Live (cambia l'account) dà 0x7883…: stessa frase, convenzione diversa, indirizzo diverso. Con la passphrase "hello" il primo indirizzo diventa 0x8fde… senza alcun errore.</li>
+<li><b>Checksum e seed.</b> Con 12 × "abandon" il checksum BIP-39 è non valido, ma la pagina deriva comunque un indirizzo (0x362A…): il seed dipende solo dal testo, il controllo serve a chi digita la frase. Le 500 frasi generate (12 e 24 parole) sono risultate tutte valide.</li>
+<li><b>Keccak ≠ SHA3-256.</b> Sulla stringa vuota danno c5d24601… e a7ffc6f8…: stessa permutazione, padding <code>0x01</code> contro <code>0x06</code>, digest completamente diversi.</li>
+</ul>
+<p class="note">I valori casuali (avalanche, statistiche, checksum) cambiano un poco a ogni esecuzione; gli indirizzi sono fissi.</p>
+<p><b>In one sentence.</b> Randomness is generated once, everything after it is derivation, the curve links secret to public, the hash shortens the public key to an address, and the checksum and the encodings only make it safe and easy for humans to copy.</p></section>
+</main>
+<script>
+//CRYPTO-START
+const P=2n**256n-2n**32n-977n,N=0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141n,
+GX=0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798n,GY=0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8n;
+const mod=(a,m=P)=>((a%m)+m)%m;
+function inv(a,m=P){let r0=mod(a,m),r1=m,s0=1n,s1=0n;while(r1){const q=r0/r1;[r0,r1]=[r1,r0-q*r1];[s0,s1]=[s1,s0-q*s1]}return mod(s0,m)}
+function dbl(p){if(!p||p[1]==0n)return null;const[X,Y,Z]=p,A=X*X%P,B=Y*Y%P,C=B*B%P,D=mod(2n*((X+B)*(X+B)-A-C)),E=3n*A,F=E*E%P,X3=mod(F-2n*D);return[X3,mod(E*(D-X3)-8n*C),2n*Y*Z%P]}
+function add(p,q){if(!p)return q;if(!q)return p;const[X1,Y1,Z1]=p,[X2,Y2,Z2]=q,Z1s=Z1*Z1%P,Z2s=Z2*Z2%P,U1=X1*Z2s%P,U2=X2*Z1s%P,S1=Y1*Z2s%P*Z2%P,S2=Y2*Z1s%P*Z1%P;
+if(U1==U2)return S1==S2?dbl(p):null;const H=mod(U2-U1),R=mod(S2-S1),H2=H*H%P,H3=H2*H%P,V=U1*H2%P,X3=mod(R*R-H3-2n*V);return[X3,mod(R*(V-X3)-S1*H3),H*Z1%P*Z2%P]}
+function mul(k){let r=null;for(let i=255;i>=0;i--){r=dbl(r);if((k>>BigInt(i))&1n)r=add(r,[GX,GY,1n])}if(!r)return null;const zi=inv(r[2]),z2=zi*zi%P;return[r[0]*z2%P,r[1]*z2%P*zi%P]}
+const M64=(1n<<64n)-1n,rotl=(x,n)=>n?((x<<BigInt(n))|(x>>BigInt(64-n)))&M64:x;
+const RC=[];{let R=1;for(let t=0;t<24;t++){let rc=0n;for(let j=0;j<7;j++){if(R&1)rc|=1n<<BigInt((1<<j)-1);R<<=1;if(R&256)R^=0x171}RC.push(rc)}}
+const ROT=[[0,36,3,41,18],[1,44,10,45,2],[62,6,43,15,61],[28,55,25,21,56],[27,20,39,8,14]];
+function perm(A){for(let r=0;r<24;r++){const C=[0,1,2,3,4].map(x=>A[x]^A[x+5]^A[x+10]^A[x+15]^A[x+20]);
+for(let x=0;x<5;x++){const D=C[(x+4)%5]^rotl(C[(x+1)%5],1);for(let y=0;y<25;y+=5)A[x+y]^=D}
+const B=Array(25);for(let x=0;x<5;x++)for(let y=0;y<5;y++)B[y+5*((2*x+3*y)%5)]=rotl(A[x+5*y],ROT[x][y]);
+for(let x=0;x<5;x++)for(let y=0;y<5;y++)A[x+5*y]=B[x+5*y]^(~B[(x+1)%5+5*y]&B[(x+2)%5+5*y]&M64);A[0]^=RC[r]}}
+function keccak(m,pad=1){const rate=136,L=Math.floor(m.length/rate)+1,buf=new Uint8Array(L*rate);buf.set(m);buf[m.length]^=pad;buf[L*rate-1]^=0x80;const A=Array(25).fill(0n);
+for(let o=0;o<buf.length;o+=rate){for(let i=0;i<17;i++){let v=0n;for(let b=7;b>=0;b--)v=(v<<8n)|BigInt(buf[o+i*8+b]);A[i]^=v}perm(A)}
+const out=new Uint8Array(32);for(let i=0;i<32;i++)out[i]=Number((A[i>>3]>>BigInt(8*(i&7)))&255n);return out}
+const enc=new TextEncoder(),hex=b=>[...b].map(x=>x.toString(16).padStart(2,'0')).join(''),b2n=b=>BigInt('0x'+(hex(b)||'0')),
+n2b=(n,l)=>Uint8Array.from(n.toString(16).padStart(l*2,'0').match(/../g).map(h=>parseInt(h,16)));
+async function pbkdf2(m,p){const k=await crypto.subtle.importKey('raw',enc.encode(m.normalize('NFKD')),'PBKDF2',false,['deriveBits']);return new Uint8Array(await crypto.subtle.deriveBits({name:'PBKDF2',salt:enc.encode(('mnemonic'+p).normalize('NFKD')),iterations:2048,hash:'SHA-512'},k,512))}
+async function hmac(key,d){const k=await crypto.subtle.importKey('raw',key,{name:'HMAC',hash:'SHA-512'},false,['sign']);return new Uint8Array(await crypto.subtle.sign('HMAC',k,d))}
+async function ckd(k,c,i){let d;if(i>=0x80000000){d=new Uint8Array(37);d.set(n2b(k,32),1)}else{const q=mul(k);d=new Uint8Array(37);d[0]=2+Number(q[1]&1n);d.set(n2b(q[0],32),1)}
+d.set([i>>>24&255,i>>>16&255,i>>>8&255,i&255],33);const I=await hmac(c,d);return[(b2n(I.slice(0,32))+k)%N,I.slice(32)]}
+const addrOf=q=>keccak(new Uint8Array([...n2b(q[0],32),...n2b(q[1],32)])).slice(12);
+function eip55(a){a=a.toLowerCase().replace(/^0x/,'');const h=hex(keccak(enc.encode(a)));return '0x'+[...a].map((c,i)=>parseInt(h[i],16)>=8?c.toUpperCase():c).join('')}
+//CRYPTO-END
+const $=id=>document.getElementById(id),H0=0x80000000;
+const sh=(s,n=18)=>s.length>2*n+3?s.slice(0,n)+'…'+s.slice(-n):s;
+//PURE-START
+const WL="abandon ability able about above absent absorb abstract absurd abuse access accident account accuse achieve acid acoustic acquire across act action actor actress actual adapt add addict address adjust admit adult advance advice aerobic affair afford afraid again age agent agree ahead aim air airport aisle alarm album alcohol alert alien all alley allow almost alone alpha already also alter always amateur amazing among amount amused analyst anchor ancient anger angle angry animal ankle announce annual another answer antenna antique anxiety any apart apology appear apple approve april arch arctic area arena argue arm armed armor army around arrange arrest arrive arrow art artefact artist artwork ask aspect assault asset assist assume asthma athlete atom attack attend attitude attract auction audit august aunt author auto autumn average avocado avoid awake aware away awesome awful awkward axis baby bachelor bacon badge bag balance balcony ball bamboo banana banner bar barely bargain barrel base basic basket battle beach bean beauty because become beef before begin behave behind believe below belt bench benefit best betray better between beyond bicycle bid bike bind biology bird birth bitter black blade blame blanket blast bleak bless blind blood blossom blouse blue blur blush board boat body boil bomb bone bonus book boost border boring borrow boss bottom bounce box boy bracket brain brand brass brave bread breeze brick bridge brief bright bring brisk broccoli broken bronze broom brother brown brush bubble buddy budget buffalo build bulb bulk bullet bundle bunker burden burger burst bus business busy butter buyer buzz cabbage cabin cable cactus cage cake call calm camera camp can canal cancel candy cannon canoe canvas canyon capable capital captain car carbon card cargo carpet carry cart case cash casino castle casual cat catalog catch category cattle caught cause caution cave ceiling celery cement census century cereal certain chair chalk champion change chaos chapter charge chase chat cheap check cheese chef cherry chest chicken chief child chimney choice choose chronic chuckle chunk churn cigar cinnamon circle citizen city civil claim clap clarify claw clay clean clerk clever click client cliff climb clinic clip clock clog close cloth cloud clown club clump cluster clutch coach coast coconut code coffee coil coin collect color column combine come comfort comic common company concert conduct confirm congress connect consider control convince cook cool copper copy coral core corn correct cost cotton couch country couple course cousin cover coyote crack cradle craft cram crane crash crater crawl crazy cream credit creek crew cricket crime crisp critic crop cross crouch crowd crucial cruel cruise crumble crunch crush cry crystal cube culture cup cupboard curious current curtain curve cushion custom cute cycle dad damage damp dance danger daring dash daughter dawn day deal debate debris decade december decide decline decorate decrease deer defense define defy degree delay deliver demand demise denial dentist deny depart depend deposit depth deputy derive describe desert design desk despair destroy detail detect develop device devote diagram dial diamond diary dice diesel diet differ digital dignity dilemma dinner dinosaur direct dirt disagree discover disease dish dismiss disorder display distance divert divide divorce dizzy doctor document dog doll dolphin domain donate donkey donor door dose double dove draft dragon drama drastic draw dream dress drift drill drink drip drive drop drum dry duck dumb dune during dust dutch duty dwarf dynamic eager eagle early earn earth easily east easy echo ecology economy edge edit educate effort egg eight either elbow elder electric elegant element elephant elevator elite else embark embody embrace emerge emotion employ empower empty enable enact end endless endorse enemy energy enforce engage engine enhance enjoy enlist enough enrich enroll ensure enter entire entry envelope episode equal equip era erase erode erosion error erupt escape essay essence estate eternal ethics evidence evil evoke evolve exact example excess exchange excite exclude excuse execute exercise exhaust exhibit exile exist exit exotic expand expect expire explain expose express extend extra eye eyebrow fabric face faculty fade faint faith fall false fame family famous fan fancy fantasy farm fashion fat fatal father fatigue fault favorite feature february federal fee feed feel female fence festival fetch fever few fiber fiction field figure file film filter final find fine finger finish fire firm first fiscal fish fit fitness fix flag flame flash flat flavor flee flight flip float flock floor flower fluid flush fly foam focus fog foil fold follow food foot force forest forget fork fortune forum forward fossil foster found fox fragile frame frequent fresh friend fringe frog front frost frown frozen fruit fuel fun funny furnace fury future gadget gain galaxy gallery game gap garage garbage garden garlic garment gas gasp gate gather gauge gaze general genius genre gentle genuine gesture ghost giant gift giggle ginger giraffe girl give glad glance glare glass glide glimpse globe gloom glory glove glow glue goat goddess gold good goose gorilla gospel gossip govern gown grab grace grain grant grape grass gravity great green grid grief grit grocery group grow grunt guard guess guide guilt guitar gun gym habit hair half hammer hamster hand happy harbor hard harsh harvest hat have hawk hazard head health heart heavy hedgehog height hello helmet help hen hero hidden high hill hint hip hire history hobby hockey hold hole holiday hollow home honey hood hope horn horror horse hospital host hotel hour hover hub huge human humble humor hundred hungry hunt hurdle hurry hurt husband hybrid ice icon idea identify idle ignore ill illegal illness image imitate immense immune impact impose improve impulse inch include income increase index indicate indoor industry infant inflict inform inhale inherit initial inject injury inmate inner innocent input inquiry insane insect inside inspire install intact interest into invest invite involve iron island isolate issue item ivory jacket jaguar jar jazz jealous jeans jelly jewel job join joke journey joy judge juice jump jungle junior junk just kangaroo keen keep ketchup key kick kid kidney kind kingdom kiss kit kitchen kite kitten kiwi knee knife knock know lab label labor ladder lady lake lamp language laptop large later latin laugh laundry lava law lawn lawsuit layer lazy leader leaf learn leave lecture left leg legal legend leisure lemon lend length lens leopard lesson letter level liar liberty library license life lift light like limb limit link lion liquid list little live lizard load loan lobster local lock logic lonely long loop lottery loud lounge love loyal lucky luggage lumber lunar lunch luxury lyrics machine mad magic magnet maid mail main major make mammal man manage mandate mango mansion manual maple marble march margin marine market marriage mask mass master match material math matrix matter maximum maze meadow mean measure meat mechanic medal media melody melt member memory mention menu mercy merge merit merry mesh message metal method middle midnight milk million mimic mind minimum minor minute miracle mirror misery miss mistake mix mixed mixture mobile model modify mom moment monitor monkey monster month moon moral more morning mosquito mother motion motor mountain mouse move movie much muffin mule multiply muscle museum mushroom music must mutual myself mystery myth naive name napkin narrow nasty nation nature near neck need negative neglect neither nephew nerve nest net network neutral never news next nice night noble noise nominee noodle normal north nose notable note nothing notice novel now nuclear number nurse nut oak obey object oblige obscure observe obtain obvious occur ocean october odor off offer office often oil okay old olive olympic omit once one onion online only open opera opinion oppose option orange orbit orchard order ordinary organ orient original orphan ostrich other outdoor outer output outside oval oven over own owner oxygen oyster ozone pact paddle page pair palace palm panda panel panic panther paper parade parent park parrot party pass patch path patient patrol pattern pause pave payment peace peanut pear peasant pelican pen penalty pencil people pepper perfect permit person pet phone photo phrase physical piano picnic picture piece pig pigeon pill pilot pink pioneer pipe pistol pitch pizza place planet plastic plate play please pledge pluck plug plunge poem poet point polar pole police pond pony pool popular portion position possible post potato pottery poverty powder power practice praise predict prefer prepare present pretty prevent price pride primary print priority prison private prize problem process produce profit program project promote proof property prosper protect proud provide public pudding pull pulp pulse pumpkin punch pupil puppy purchase purity purpose purse push put puzzle pyramid quality quantum quarter question quick quit quiz quote rabbit raccoon race rack radar radio rail rain raise rally ramp ranch random range rapid rare rate rather raven raw razor ready real reason rebel rebuild recall receive recipe record recycle reduce reflect reform refuse region regret regular reject relax release relief rely remain remember remind remove render renew rent reopen repair repeat replace report require rescue resemble resist resource response result retire retreat return reunion reveal review reward rhythm rib ribbon rice rich ride ridge rifle right rigid ring riot ripple risk ritual rival river road roast robot robust rocket romance roof rookie room rose rotate rough round route royal rubber rude rug rule run runway rural sad saddle sadness safe sail salad salmon salon salt salute same sample sand satisfy satoshi sauce sausage save say scale scan scare scatter scene scheme school science scissors scorpion scout scrap screen script scrub sea search season seat second secret section security seed seek segment select sell seminar senior sense sentence series service session settle setup seven shadow shaft shallow share shed shell sheriff shield shift shine ship shiver shock shoe shoot shop short shoulder shove shrimp shrug shuffle shy sibling sick side siege sight sign silent silk silly silver similar simple since sing siren sister situate six size skate sketch ski skill skin skirt skull slab slam sleep slender slice slide slight slim slogan slot slow slush small smart smile smoke smooth snack snake snap sniff snow soap soccer social sock soda soft solar soldier solid solution solve someone song soon sorry sort soul sound soup source south space spare spatial spawn speak special speed spell spend sphere spice spider spike spin spirit split spoil sponsor spoon sport spot spray spread spring spy square squeeze squirrel stable stadium staff stage stairs stamp stand start state stay steak steel stem step stereo stick still sting stock stomach stone stool story stove strategy street strike strong struggle student stuff stumble style subject submit subway success such sudden suffer sugar suggest suit summer sun sunny sunset super supply supreme sure surface surge surprise surround survey suspect sustain swallow swamp swap swarm swear sweet swift swim swing switch sword symbol symptom syrup system table tackle tag tail talent talk tank tape target task taste tattoo taxi teach team tell ten tenant tennis tent term test text thank that theme then theory there they thing this thought three thrive throw thumb thunder ticket tide tiger tilt timber time tiny tip tired tissue title toast tobacco today toddler toe together toilet token tomato tomorrow tone tongue tonight tool tooth top topic topple torch tornado tortoise toss total tourist toward tower town toy track trade traffic tragic train transfer trap trash travel tray treat tree trend trial tribe trick trigger trim trip trophy trouble truck true truly trumpet trust truth try tube tuition tumble tuna tunnel turkey turn turtle twelve twenty twice twin twist two type typical ugly umbrella unable unaware uncle uncover under undo unfair unfold unhappy uniform unique unit universe unknown unlock until unusual unveil update upgrade uphold upon upper upset urban urge usage use used useful useless usual utility vacant vacuum vague valid valley valve van vanish vapor various vast vault vehicle velvet vendor venture venue verb verify version very vessel veteran viable vibrant vicious victory video view village vintage violin virtual virus visa visit visual vital vivid vocal voice void volcano volume vote voyage wage wagon wait walk wall walnut want warfare warm warrior wash wasp waste water wave way wealth weapon wear weasel weather web wedding weekend weird welcome west wet whale what wheat wheel when where whip whisper wide width wife wild will win window wine wing wink winner winter wire wisdom wise wish witness wolf woman wonder wood wool word work world worry worth wrap wreck wrestle wrist write wrong yard year yellow you young youth zebra zero zone zoo".split(' '),WI=new Map(WL.map((w,i)=>[w,i])),TP='abandon '.repeat(11)+'about',rnd=n=>Math.random()*n|0,esc=t=>t.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const sha=async b=>new Uint8Array(await crypto.subtle.digest('SHA-256',b)),bin=(n,l)=>n.toString(2).padStart(l,'0'),bits2bytes=b=>Uint8Array.from(b.match(/.{8}/g).map(x=>parseInt(x,2)));
+async function mnFromEntropy(e){const eb=[...e].map(x=>bin(x,8)).join(''),cs=eb.length/32,h=await sha(e),all=eb+[...h].map(x=>bin(x,8)).join('').slice(0,cs);return all.match(/.{11}/g).map(x=>WL[parseInt(x,2)]).join(' ')}
+async function chk39(m){const w=m.split(' ');if(![12,15,18,21,24].includes(w.length))return{st:'len'};const ix=w.map(x=>WI.get(x));if(ix.includes(undefined))return{st:'word',bad:w.filter(x=>!WI.has(x))};
+const all=ix.map(i=>bin(i,11)).join(''),ent=all.length*32/33,cs=all.length-ent,h=[...await sha(bits2bytes(all.slice(0,ent)))].map(x=>bin(x,8)).join('').slice(0,cs);return{st:h===all.slice(ent)?'ok':'bad',w,ix,all,ent,cs,h}}
+const pth=(a,i)=>[44+H0,60+H0,a+H0,0,i];
+async function addrs(m,pp,paths){const seed=await pbkdf2(m,pp),I=await hmac(enc.encode('Bitcoin seed'),seed),out=[];for(const p of paths){let k=b2n(I.slice(0,32)),c=I.slice(32);for(const x of p)[k,c]=await ckd(k,c,x);out.push(eip55(hex(addrOf(mul(k)))))}return out}
+//PURE-END
+async function render39(m){const r=await chk39(m),el=$('b39');
+if(r.st=='len'){el.innerHTML='<p class="no">BIP-39 phrases have 12, 15, 18, 21 or 24 words — the seed is still derived from the text.</p>';return}
+if(r.st=='word'){el.innerHTML=`<p class="no">Not in the BIP-39 word list: ${esc(r.bad.join(', '))}. A real wallet refuses this; here the seed is still derived from the exact text.</p>`;return}
+el.innerHTML=`<p>${r.st=='ok'?'<span class="yes">✔ valid BIP-39 phrase</span>':'<span class="no">✘ checksum mismatch</span> (a wallet would warn you; a seed is still derived below)'}: ${r.w.length} words × 11 bit = ${r.all.length} bit = <b>${r.ent}</b> bit entropy + <b>${r.cs}</b> checksum bits (first ${r.cs} bits of SHA-256(entropy) = <code>${r.h}</code>).</p><details class="d"><summary>Word → 11-bit encoding</summary><table><tr><th>#</th><th>word</th><th>index</th><th>11 bits (checksum in red)</th></tr>${r.w.map((w,i)=>{const b=r.all.slice(i*11,i*11+11),c=Math.min(11,Math.max(0,r.ent-i*11));return `<tr><td>${i+1}</td><td>${w}</td><td>${r.ix[i]}</td><td class="mono">${b.slice(0,c)}<span class="no">${b.slice(c)}</span></td></tr>`}).join('')}</table></details>`}
+let ALL=[];
+async function pipeline2(){await pipeline();const m=$('mn').value.trim().replace(/\s+/g,' '),pp=$('pp').value;render39(m);const L=[];
+for(let i=0;i<10;i++)L.push(["m/44'/60'/0'/0/"+i,'MetaMask-style (address_index)',pth(0,i)]);for(let a=1;a<5;a++)L.push([`m/44'/60'/${a}'/0/0`,'Ledger Live-style (account)',pth(a,0)]);
+const ad=await addrs(m,pp,L.map(x=>x[2]));ALL=L.map((x,i)=>[x[0],x[1],ad[i]]);
+$('five').innerHTML='<tr><th>Path</th><th>Convention</th><th>Address</th></tr>'+ALL.slice(0,5).concat(ALL.slice(10,12)).map(r=>`<tr><td class="mono">${r[0]}</td><td>${r[1]}</td><td class="mono">${r[2]}</td></tr>`).join('')}
+async function genM(w){$('mn').value=await mnFromEntropy(crypto.getRandomValues(new Uint8Array(w*4/3)));pipeline2()}
+$('g12').onclick=()=>genM(12);$('g24').onclick=()=>genM(24);$('tp').onclick=()=>{$('mn').value=TP;$('pp').value='';$('ix').value=0;pipeline2()};
+function chk(){chk0();const a=$('ea').value.trim();if(!/^0x[0-9a-fA-F]{40}$/.test(a)){$('eg').innerHTML='';return}const l=a.slice(2).toLowerCase(),h=hex(keccak(enc.encode(l)));
+$('eg').innerHTML=[...l].map((c,i)=>{const up=/[a-f]/.test(c)&&parseInt(h[i],16)>=8;return `<div class="cell${up?' up':''}"><span>${c}</span><i>${h[i]}</i><b>${up?c.toUpperCase():c}</b></div>`}).join('')+'<p class="note" style="width:100%">Per column: lowercase character · Keccak-256 digit at that position · result. A letter with digit 8–f becomes uppercase.</p>'}
+// checksum robustness
+async function bipTrial(k){const w=(await mnFromEntropy(crypto.getRandomValues(new Uint8Array(16)))).split(' ');if(k==0){const j=rnd(12);let x;do x=WL[rnd(2048)];while(x==w[j]);w[j]=x}else{const j=rnd(11);if(w[j]==w[j+1])return null;[w[j],w[j+1]]=[w[j+1],w[j]]}return(await chk39(w.join(' '))).st=='ok'}
+function eipTrial(k){const t=[...eip55(hex(crypto.getRandomValues(new Uint8Array(20)))).slice(2)];let j;
+if(k==2){do j=rnd(40);while(!/[a-f]/i.test(t[j]));t[j]=t[j]==t[j].toLowerCase()?t[j].toUpperCase():t[j].toLowerCase()}else{j=rnd(40);let x;do x='0123456789abcdef'[rnd(16)];while(x==t[j].toLowerCase());t[j]=x}const a='0x'+t.join('');return a==eip55(a)}
+$('cb').onclick=async()=>{const T=+$('ct').value,rows=[['BIP-39: one word replaced by another','b0','1/16 = 6.25 % (4 check bits)'],['BIP-39: two adjacent words swapped','b1','≈ 6.25 %'],['EIP-55: one hex digit replaced','e1','≈ 2<sup>−15</sup> ≈ 0.003 %'],['EIP-55: case of one letter flipped','e2','0 % (hash of the lowercase text is unchanged)']],res=[];$('cb').disabled=true;
+for(const r of rows){let ok=0;for(let i=0;i<T;i++){let v;if(r[1][0]=='b'){do v=await bipTrial(+r[1][1]);while(v===null)}else v=eipTrial(+r[1][1]);ok+=v;if(i%100==99){$('cs').textContent=`${r[0]}: ${i+1}/${T}`;await new Promise(z=>setTimeout(z))}}res.push([r[0],ok,r[2]])}
+$('ctab').innerHTML='<tr><th>Mistake</th><th>Accepted</th><th>Expected</th></tr>'+res.map(r=>`<tr><td>${r[0]}</td><td><b>${(100*r[1]/T).toFixed(2)} %</b> (${r[1]}/${T})</td><td>${r[2]}</td></tr>`).join('')+'<tr><td>Lowercase address (no checksum), one digit replaced</td><td><b>100 %</b></td><td>no protection at all</td></tr>';$('cs').textContent='done';$('cb').disabled=false};
+
+async function pipeline(){const m=$('mn').value.trim().replace(/\s+/g,' '),pp=$('pp').value,i=parseInt($('ix').value)||0;$('run').disabled=true;
+const seed=await pbkdf2(m,pp),I=await hmac(enc.encode('Bitcoin seed'),seed);let k=b2n(I.slice(0,32)),c=I.slice(32);const rows=[];
+rows.push(['Mnemonic',m.split(' ').length+' words','encoding of entropy',m,m.split(' ').length*11+' bit']);
+rows.push(['BIP-39','PBKDF2-HMAC-SHA512 ×2048','key derivation (stretching)',hex(seed),'512 bit']);
+rows.push(['BIP-32 master','HMAC-SHA512("Bitcoin seed")','key derivation','k = '+hex(I.slice(0,32)),'256 bit']);
+for(const [n,x] of [["44'",44+H0],["60'",60+H0],["0'",H0],["0",0],[""+i,i]]){[k,c]=await ckd(k,c,x);rows.push(['BIP-44 child '+n,'CKD ('+(x>=H0?'hardened':'normal')+')','key derivation',hex(n2b(k,32)),'256 bit'])}
+const q=mul(k),a=addrOf(q);
+rows.push(['Private key','m/44\'/60\'/0\'/0/'+i,'secret scalar',hex(n2b(k,32)),'256 bit']);
+rows.push(['secp256k1','Q = k·G','public-key crypto (one-way)','x='+hex(n2b(q[0],32))+' y='+hex(n2b(q[1],32)),'512 bit']);
+rows.push(['Keccak-256','H(x‖y)[12:32]','hashing + truncation',hex(a),'160 bit']);
+rows.push(['EIP-55','Keccak-256 of hex string','checksum in letter case',eip55(hex(a)),'≈15 check bits']);
+$('pipe').innerHTML='<tr><th>Stage</th><th>Operation</th><th>Type</th><th>Value</th><th>Size</th></tr>'+rows.map(r=>`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td><span class="tag">${r[2]}</span></td><td class="mono">${r[3]}</td><td>${r[4]}</td></tr>`).join('');$('run').disabled=false}
+$('run').onclick=pipeline2;pipeline2();
+// timeline
+const EV=[[1977,'RSA','#0b7f86','RSA (Rivest–Shamir–Adleman): first practical public-key cryptosystem.'],[1985,'ECC','#0b7f86','Koblitz and Miller propose elliptic-curve cryptography: same security with much shorter keys.'],[2000,'secp256k1','#0b7f86','SECG standard curves; secp256k1 later chosen by Bitcoin (2009) and Ethereum.'],[2001,'SHA-2','#7a5bc4','SHA-256/512 standardised by NIST (FIPS 180-2): used by BIP-39 (PBKDF2) and BIP-32 (HMAC).'],[2008,'Keccak','#7a5bc4','Keccak submitted to the NIST SHA-3 competition (Bertoni, Daemen, Peeters, Van Assche); selected in 2012.'],[2012,'BIP-32','#d6336c','Hierarchical deterministic wallets (Pieter Wuille).'],[2013,'BIP-39','#d6336c','Mnemonic code for generating deterministic keys.'],[2014,'BIP-44','#d6336c','Multi-account HD layout m/purpose\'/coin\'/account\'/change/index.'],[2015,'SHA-3','#7a5bc4','FIPS 202 standardises Keccak with new padding (0x06): SHA3-256 ≠ Ethereum\'s Keccak-256. Ethereum mainnet launches the same year.'],[2016,'EIP-55','#d6336c','Mixed-case checksum address encoding (Vitalik Buterin, Alex Van de Sande).']];
+{const x=y=>40+(y-1975)*(620/42);let s=`<line class="ax" x1="30" x2="670" y1="125" y2="125"/>`;for(let y=1980;y<=2015;y+=5)s+=`<line class="gr" x1="${x(y)}" x2="${x(y)}" y1="20" y2="230"/><text class="lb" x="${x(y)}" y="245" text-anchor="middle">${y}</text>`;
+EV.forEach((e,i)=>{const up=i%2,yy=up?85:165;s+=`<g class="ev" tabindex="0" data-i="${i}"><line class="ax" x1="${x(e[0])}" x2="${x(e[0])}" y1="125" y2="${yy}"/><circle cx="${x(e[0])}" cy="${yy}" r="8" fill="${e[2]}"/><text class="lb" x="${x(e[0])}" y="${up?yy-13:yy+20}" text-anchor="middle" style="font-weight:700">${e[1]} ${e[0]}</text></g>`});
+$('tl').innerHTML=s;const show=g=>{const e=EV[g.dataset.i];$('tld').innerHTML=`<b>${e[1]} (${e[0]})</b> — ${e[3]}`};document.querySelectorAll('.ev').forEach(g=>{g.onclick=g.onfocus=g.onmouseenter=()=>show(g)})}
+// hashes
+async function hrow(){const m=enc.encode($('hin').value),d=async n=>hex(new Uint8Array(await crypto.subtle.digest(n,m)));
+$('htab').innerHTML=[['Keccak-256 (Ethereum)',hex(keccak(m))],['SHA3-256 (NIST FIPS 202)',hex(keccak(m,6))],['SHA-256 (SHA-2)',await d('SHA-256')],['SHA-512 (SHA-2)',await d('SHA-512')]].map(r=>`<tr><td><b>${r[0]}</b></td><td class="mono">${r[1]}</td></tr>`).join('')}
+$('hin').oninput=hrow;hrow();
+// chart helpers
+function hist(el,c,e,o={}){const W=640,H=250,l=46,r=10,t=12,b=34,n=c.length,mx=Math.max(...c,...e)*1.1||1,bw=(W-l-r)/n;let s=`<line class="ax" x1="${l}" x2="${W-r}" y1="${H-b}" y2="${H-b}"/>`;
+for(let i=0;i<=4;i++){const v=mx*i/4,y=H-b-(H-b-t)*i/4;s+=`<line class="gr" x1="${l}" x2="${W-r}" y1="${y}" y2="${y}"/><text class="lb" x="${l-4}" y="${y+3}" text-anchor="end">${v>=10?Math.round(v):v.toFixed(1)}</text>`}
+c.forEach((v,i)=>{const h=(H-b-t)*v/mx;s+=`<rect class="bar" x="${l+i*bw+1}" y="${H-b-h}" width="${Math.max(bw-2,1)}" height="${h}"/>`;if(i%(o.every||1)==0)s+=`<text class="lb" x="${l+i*bw+bw/2}" y="${H-b+13}" text-anchor="middle">${(o.x0||0)+i}</text>`});
+s+=`<polyline class="ex" points="${e.map((v,i)=>`${l+i*bw+bw/2},${H-b-(H-b-t)*v/mx}`).join(' ')}"/><text class="lb" x="${W/2}" y="${H-2}" text-anchor="middle">${o.xl||''}</text>`;el.innerHTML=s}
+const binom=(n,p,T,lo=0,hi=n)=>{let q=Math.pow(1-p,n),a=[];for(let k=0;k<=n;k++){if(k>=lo&&k<=hi)a.push(q*T);q*=(n-k)/(k+1)*p/(1-p)}return a};
+// avalanche
+$('at').oninput=()=>$('atv').textContent=$('at').value;
+async function H(f,m){if(f=='k')return keccak(m);if(f=='s3')return keccak(m,6);if(f=='s2')return new Uint8Array(await crypto.subtle.digest('SHA-256',m));return m.map((v,i)=>v^m[(i+1)%32])}
+$('ab').onclick=async()=>{const f=$('af').value,T=+$('at').value,c=new Array(257).fill(0);$('ab').disabled=true;
+for(let i=0;i<T;i++){const m=crypto.getRandomValues(new Uint8Array(32)),m2=m.slice(),bit=Math.random()*256|0;m2[bit>>3]^=1<<(bit&7);const a=await H(f,m),b=await H(f,m2);let d=0;for(let j=0;j<32;j++){let x=a[j]^b[j];while(x){d+=x&1;x>>=1}}c[d]++}
+let mu=0,v=0;c.forEach((n,d)=>mu+=n*d/T);c.forEach((n,d)=>v+=n*(d-mu)**2/T);hist($('c2'),c.slice(96,161),binom(256,.5,T,96,160),{x0:96,every:4,xl:'bits changed (out of 256)'});
+$('c2n').innerHTML=`mean = <b>${mu.toFixed(2)}</b> (theory 128), σ = <b>${Math.sqrt(v).toFixed(2)}</b> (theory 8). `+(Math.abs(mu-128)<1.5?'<span class="yes">Matches the ideal avalanche.</span>':'<span class="no">Far from 128: almost all mass lies outside the window — a bit flip barely changes the output.</span>');$('ab').disabled=false};
+// address statistics
+$('nn').oninput=()=>$('nnv').textContent=$('nn').value;
+const Phi=z=>{const t=1/(1+.2316419*Math.abs(z)),d=.3989423*Math.exp(-z*z/2),p=d*t*(.3193815+t*(-.3565638+t*(1.781478+t*(-1.821256+t*1.330274))));return z>0?1-p:p};
+const chiP=(x,k)=>1-Phi((Math.cbrt(x/k)-(1-2/(9*k)))/Math.sqrt(2/(9*k)));
+function dots(n,bits){const el=$('c3'),W=640,H=250,l=46,t=12,b=26,s0=.5/Math.sqrt(n),lo=.5-5*s0,hi=.5+5*s0,Y=v=>t+(H-t-b)*(hi-v)/(hi-lo);let s=`<rect class="band" x="${l}" width="${W-l-10}" y="${Y(.5+3*s0)}" height="${Y(.5-3*s0)-Y(.5+3*s0)}"/><line class="ex" x1="${l}" x2="${W-10}" y1="${Y(.5)}" y2="${Y(.5)}" style="stroke-width:1"/>`,out=0;
+for(let i=0;i<=4;i++){const v=lo+(hi-lo)*i/4;s+=`<text class="lb" x="${l-4}" y="${Y(v)+3}" text-anchor="end">${v.toFixed(3)}</text>`}
+bits.forEach((c,i)=>{const p=c/n,o=Math.abs(p-.5)>3*s0;out+=o;s+=`<circle class="dot ${o?'out':''}" cx="${l+(i+.5)*(W-l-10)/160}" cy="${Y(p)}" r="2.6"/>`});s+=`<text class="lb" x="${W/2}" y="${H-5}" text-anchor="middle">address bit index 0–159</text>`;el.innerHTML=s;
+$('c3n').innerHTML=`${out} of 160 bits outside ±3σ (expected ≈ ${(160*.0027).toFixed(1)}).`}
+function show(n,bits,nib,lt){dots(n,bits);const E=40*n/16;hist($('c4'),nib,nib.map(_=>E),{xl:'hex digit (0–f)',x0:0});const lab=[...'0123456789abcdef'];$('c4').querySelectorAll('text.lb').forEach(t=>{const v=+t.textContent;if(!isNaN(v)&&t.getAttribute('text-anchor')=='middle'&&+t.getAttribute('y')>200&&v<16)t.textContent=lab[v]});
+const chi=nib.reduce((a,o)=>a+(o-E)**2/E,0);$('c4n').innerHTML=`χ² = <b>${chi.toFixed(1)}</b> (df 15, 5 % critical 25.0), p ≈ ${chiP(chi,15).toFixed(2)} → <span class="${chi<25?'yes':'no'}">${chi<25?'uniform':'not uniform'}</span>`;
+hist($('c5'),lt,binom(40,.375,n),{xl:'letters a–f in the 40 hex digits',every:2});const mu=lt.reduce((a,c,k)=>a+c*k,0)/n;$('c5n').innerHTML=`mean = <b>${mu.toFixed(2)}</b> (Binomial(40, 6/16): 15) → about 15 checksum bits per address.`}
+$('gen').onclick=async()=>{const n=+$('nn').value,bits=Array(160).fill(0),nib=Array(16).fill(0),lt=Array(41).fill(0),ex=[];$('gen').disabled=true;
+for(let i=0;i<n;i++){let k;do{k=b2n(crypto.getRandomValues(new Uint8Array(32)))}while(k<1n||k>=N);const a=hex(addrOf(mul(k)));[...a].forEach((ch,j)=>{const v=parseInt(ch,16);nib[v]++;for(let q=0;q<4;q++)bits[j*4+q]+=v>>(3-q)&1});lt[(a.match(/[a-f]/g)||[]).length]++;if(i<3)ex.push([k,a]);
+if(i%15==14){$('gst').textContent=`${i+1}/${n}`;await new Promise(r=>setTimeout(r))}}
+show(n,bits,nib,lt);$('gst').textContent=`done (${n} keys)`;$('samp').innerHTML='<tr><th>Sample private key</th><th>EIP-55 address</th></tr>'+ex.map(e=>`<tr><td class="mono">${hex(n2b(e[0],32))}</td><td class="mono">${eip55(e[1])}</td></tr>`).join('');$('gen').disabled=false};
+// EIP-55 validator
+function chk0(){let a=$('ea').value.trim();if(!/^0x[0-9a-fA-F]{40}$/.test(a)){$('eo').innerHTML='<span class="no">Not a 20-byte hex address.</span>';return}
+const b=a.slice(2),c=eip55(a),lw=b==b.toLowerCase()||b==b.toUpperCase();$('eo').innerHTML=(lw?'<span class="no">No checksum information (all one case).</span>':a==c?'<span class="yes">✔ Valid EIP-55 checksum.</span>':'<span class="no">✘ Checksum mismatch — typo or wrong case.</span>')+'<br><code>'+[...c].map((ch,i)=>i>1&&ch!=a[i]?`<span class="hl">${ch}</span>`:ch).join('')+'</code> <span class="note">(correct form; differing characters highlighted)</span>'}
+$('ea').oninput=chk;chk();
+// entropy chart
+function c6(){const r=+$('gr').value;$('grv').textContent=r;const W=640,H=250,l=46,b=36,t=14,ws=[12,15,18,21,24],v=ws.map(w=>Math.max(0,(w*32/3-1)*.30103-r-7.4991)),mx=Math.max(...v,10.15)*1.12,Y=y=>H-b-(H-b-t)*y/mx;let s=`<line class="ax" x1="${l}" x2="${W-10}" y1="${H-b}" y2="${H-b}"/>`;
+for(let i=0;i<=4;i++){s+=`<line class="gr" x1="${l}" x2="${W-10}" y1="${Y(mx*i/4)}" y2="${Y(mx*i/4)}"/><text class="lb" x="${l-4}" y="${Y(mx*i/4)+3}" text-anchor="end">${(mx*i/4).toFixed(0)}</text>`}
+ws.forEach((w,i)=>{const x=l+20+i*(W-l-40)/5,bw=(W-l-40)/5-20;s+=`<rect class="bar" x="${x}" y="${Y(v[i])}" width="${bw}" height="${H-b-Y(v[i])}"/><text class="lb" x="${x+bw/2}" y="${H-b+13}" text-anchor="middle">${w} words</text><text class="lb" x="${x+bw/2}" y="${H-b+25}" text-anchor="middle">${w*32/3} bit</text><text class="lb" x="${x+bw/2}" y="${Y(v[i])-4}" text-anchor="middle">10^${v[i].toFixed(1)} y</text>`});
+s+=`<line class="ex" x1="${l}" x2="${W-10}" y1="${Y(10.15)}" y2="${Y(10.15)}"/><text class="lb" x="${W-12}" y="${Y(10.15)-4}" text-anchor="end" style="fill:#d6336c">age of the universe</text>`;$('c6').innerHTML=s}
+$('gr').oninput=c6;c6();
+</script>
+</html>
