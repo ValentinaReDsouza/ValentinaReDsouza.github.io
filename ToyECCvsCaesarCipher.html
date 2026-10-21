@@ -1,189 +1,241 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Toy ECC vs Caesar: Encryption &amp; Attacks</title>
+<title>Toy ECC vs Caesar: Encryption, Attacks &amp; Costs</title>
 <style>
-:root{color-scheme:dark;--bg:#0d0a24;--card:#1a1440;--card2:#241b5c;--tx:#ece9ff;--mu:#a9a3d9;--pu:#a56bff;--bl:#4da3ff;--ok:#5cf2c0;--bad:#ff7aa8;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-*{box-sizing:border-box}html{scroll-behavior:smooth}
+:root{color-scheme:dark;--bg:#0d0a24;--card:#1a1440;--card2:#241b5c;--tx:#ece9ff;--mu:#a9a3d9;--pu:#a56bff;--bl:#4da3ff;--ok:#5cf2c0;--bad:#ff7aa8;--wa:#ffc66b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:env(safe-area-inset-top,0px)}
 body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.6 system-ui,-apple-system,Segoe UI,sans-serif;overflow-x:hidden}
-.orb{position:fixed;border-radius:50%;filter:blur(90px);opacity:.35;z-index:-1;animation:fl 14s ease-in-out infinite alternate}
-.o1{width:420px;height:420px;background:var(--pu);top:-100px;left:-100px}.o2{width:460px;height:460px;background:var(--bl);bottom:-120px;right:-120px;animation-delay:-6s}
-@keyframes fl{to{transform:translate(80px,60px) scale(1.2)}}
-header{text-align:center;padding:64px 20px 24px}
-h1{font-size:clamp(2rem,6vw,3.4rem);margin:0;background:linear-gradient(90deg,var(--pu),var(--bl),var(--pu));background-size:200%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:sh 6s linear infinite}
-@keyframes sh{to{background-position:200%}}
+header{text-align:center;padding:56px 20px 16px}
+h1{font-size:clamp(1.9rem,5vw,3.1rem);margin:0;background:linear-gradient(90deg,var(--pu),var(--bl));-webkit-background-clip:text;background-clip:text;color:transparent}
 header p{color:var(--mu);max-width:680px;margin:12px auto}
-nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;display:flex;gap:8px;overflow-x:auto;padding:10px 16px;background:#0d0a24cc;backdrop-filter:blur(10px)}
-nav a{white-space:nowrap;color:var(--tx);text-decoration:none;padding:6px 14px;border-radius:99px;background:var(--card);font-size:.9rem;transition:.2s}
-nav a:hover{background:linear-gradient(90deg,var(--pu),var(--bl))}
-main{max-width:980px;margin:0 auto;padding:0 16px 80px}
-section{background:linear-gradient(145deg,var(--card),var(--card2));border:1px solid #ffffff18;border-radius:20px;padding:26px;margin:28px 0;opacity:0;transform:translateY(30px);transition:.7s}
-section.in{opacity:1;transform:none}
-h2{margin:0 0 8px;color:#d6c4ff}h3{color:var(--bl);margin:18px 0 6px}
+main{max-width:900px;margin:0 auto;padding:0 16px 80px}
+@media(min-width:1100px){main{margin-left:max(16px,calc((100% - 300px - 900px)/2));margin-right:auto}header{padding-right:300px}body{padding-right:300px}}
+section{background:linear-gradient(145deg,var(--card),var(--card2));border:1px solid #ffffff22;border-radius:20px;padding:24px;margin:24px 0;scroll-margin-top:16px}
+section.on{border-color:var(--pu);box-shadow:0 0 0 1px var(--pu)}
+h2{margin:0 0 8px;color:#d6c4ff}h3{color:var(--bl);margin:16px 0 6px}
 p,li{color:#d8d4f5}code,.mono{font-family:ui-monospace,Menlo,monospace;font-size:.85rem;word-break:break-all}
 code{background:#0006;padding:1px 6px;border-radius:6px;color:var(--ok)}
 label{display:block;font-size:.85rem;color:var(--mu);margin:10px 0 4px}
 input[type=text],textarea,select{width:100%;background:#0a0720;border:1px solid #6b55c9;color:var(--tx);border-radius:10px;padding:9px 12px;font:inherit}
 input[type=range]{width:100%;accent-color:var(--pu)}
-button{background:linear-gradient(90deg,var(--pu),var(--bl));color:#fff;border:0;padding:10px 18px;border-radius:10px;font:600 .9rem inherit;cursor:pointer;margin:8px 8px 0 0;transition:transform .15s,box-shadow .15s}
-button:hover{transform:translateY(-2px);box-shadow:0 6px 20px #a56bff66}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+button{background:linear-gradient(90deg,var(--pu),var(--bl));color:#fff;border:0;padding:10px 18px;border-radius:10px;font:600 .9rem system-ui,sans-serif;cursor:pointer;margin:8px 8px 0 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
 .box{background:#0a072088;border:1px solid #ffffff14;border-radius:14px;padding:14px;margin-top:12px;overflow-x:auto}
-.step{opacity:0;transform:translateX(-14px);animation:si .5s forwards;margin:6px 0;padding-left:10px;border-left:3px solid var(--pu)}
-@keyframes si{to{opacity:1;transform:none}}
+.step{margin:6px 0;padding-left:10px;border-left:3px solid var(--pu)}
 .row{display:flex;flex-wrap:wrap;gap:3px;margin:4px 0}
-.l{width:26px;height:30px;display:grid;place-items:center;background:#2a2070;border-radius:6px;font:600 .8rem ui-monospace,monospace;transition:.5s}
+.l{width:26px;height:30px;display:grid;place-items:center;background:#2a2070;border-radius:6px;font:600 .8rem ui-monospace,monospace}
 .l.c{background:linear-gradient(var(--pu),var(--bl))}
-.bars{display:flex;align-items:flex-end;gap:4px;height:150px;margin-top:10px}
-.bar{flex:1;border-radius:6px 6px 0 0;background:linear-gradient(var(--bl),var(--pu));transition:height .6s;min-height:2px;position:relative}
-.bar.best{background:linear-gradient(var(--ok),var(--bl));box-shadow:0 0 14px var(--ok)}
-.bar span{position:absolute;bottom:-20px;left:0;right:0;text-align:center;font-size:.65rem;color:var(--mu)}
+.bars{display:flex;align-items:flex-end;gap:3px;height:150px;margin:8px 0 26px}
+.bar{flex:1;border-radius:5px 5px 0 0;background:linear-gradient(var(--bl),var(--pu));min-height:2px;position:relative;transition:height .5s}
+.bar.best{background:linear-gradient(var(--ok),var(--bl))}
+.bar span{position:absolute;bottom:-19px;left:-4px;right:-4px;text-align:center;font-size:.62rem;color:var(--mu);overflow:hidden}
+.bar b{position:absolute;top:-15px;left:-6px;right:-6px;text-align:center;font:.55rem ui-monospace,monospace;color:var(--mu)}
+.sm .bars{height:110px}.sm .bar span{font-size:.8rem;color:var(--tx)}
 .pb{height:10px;background:#0006;border-radius:9px;overflow:hidden;margin-top:10px}
 .pb i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--pu),var(--bl))}
-table{width:100%;border-collapse:collapse;font-size:.9rem}td,th{padding:8px;border-bottom:1px solid #ffffff18;text-align:left;vertical-align:top}th{color:var(--bl)}
-.ok{color:var(--ok)}.bad{color:var(--bad)}.mu{color:var(--mu);font-size:.85rem}
-.legend span{display:inline-block;margin-right:14px;font-size:.8rem}.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px}
+table{width:100%;border-collapse:collapse;font-size:.85rem}td,th{padding:7px;border-bottom:1px solid #ffffff18;text-align:left;vertical-align:top}th{color:var(--bl);font-size:.72rem;text-transform:uppercase}
+.ok{color:var(--ok)}.bad{color:var(--bad)}.mu{color:var(--mu);font-size:.85rem}.wa{color:var(--wa)}
+svg text{fill:var(--mu);font:11px system-ui,sans-serif}
+#dash .r{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:10px 0}
+.nm{width:190px;font-weight:600}.tk{flex:1;min-width:150px;height:18px;background:#0008;border-radius:9px;overflow:hidden}.tk i{display:block;height:100%;border-radius:9px;transition:width .3s,background .3s}
+.tl{display:flex;gap:4px}.tl u{width:16px;height:16px;border-radius:50%;background:#ffffff18;display:block}
+.bd{display:inline-block;padding:2px 9px;border-radius:8px;font:700 .72rem ui-monospace,monospace;border:1px solid;white-space:nowrap}
+.cd{border-width:2px}.mb{margin:7px 0}.mb div:first-child{display:flex;justify-content:space-between;font-size:.78rem;color:var(--mu)}
+/* right-side subtitles window */
+#side{position:fixed;top:0;right:0;bottom:0;width:290px;background:#120d33f2;border-left:1px solid var(--pu);padding:calc(18px + env(safe-area-inset-top,0px)) 16px calc(18px + env(safe-area-inset-bottom,0px));z-index:50;overflow-y:auto;backdrop-filter:blur(10px);transition:transform .3s}
+#side h3{margin:0 0 8px;color:var(--ok);font-size:.95rem}
+#cap{background:#0006;border-radius:12px;padding:12px;min-height:150px;font-size:.9rem;color:var(--tx);border-left:3px solid var(--ok)}
+#cap b{display:block;color:var(--pu);margin-bottom:4px}
+#toc{list-style:none;padding:0;margin:14px 0 0}#toc a{display:block;padding:6px 10px;border-radius:8px;color:var(--mu);text-decoration:none;font-size:.85rem}
+#toc a.on{background:var(--card2);color:var(--tx)}
+#tg,#cl{display:none}
+@media(max-width:1099px){#side{transform:translateX(100%)}#side.open{transform:none}
+ #tg{display:block;position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:60;border-radius:50px}
+ #cl{display:inline-block;margin-top:12px}}
 </style></head><body>
-<div class="orb o1"></div><div class="orb o2"></div>
-<header><h1>Toy ECC vs Caesar Cipher</h1>
-<p>An interactive lab: encrypt, decrypt and break two toy ciphers: one built on secp256k1 with a deliberately tiny private key, one on a 26-letter shift.</p></header>
-<nav><a href="#ecc">1 · ECC</a><a href="#caesar">2 · Caesar</a><a href="#cmp">3 · Compare</a><a href="#stat">4 · Caesar attack</a><a href="#eccatk">5 · ECC attack</a><a href="#disc">6 · Discussion</a></nav>
+<header><h1>Toy ECC vs Caesar: Attacks &amp; Costs</h1>
+<p>Encrypt, break and cost out two toy ciphers, then see how the same attacks scale to 128- and 256-bit keys, and why letter statistics differ between Italian and Konkani.</p></header>
 <main>
 
-<section id="ecc"><h2>1 · Toy ECC encryption (secp256k1, small private key)</h2>
-<p class="mu">Assumption: Part 1 is an ElGamal/ECIES-style scheme. Curve <code>y² = x³ + 7</code> over p = 2²⁵⁶ − 2³² − 977 with standard generator G, but the private key <code>d</code> is limited to a small range. The shared point's x-coordinate is expanded into a keystream (XOR).</p>
+<section id="ecc" data-t="1 · Toy ECC" data-c="Curve y² = x³ + 7 (secp256k1) with a deliberately tiny private key d. Public key Q = d·G. Encryption sends C1 = k·G and XORs the message with a keystream from S = k·Q. Decryption recomputes S = d·C1."><h2>1 · Toy ECC (secp256k1, small private key)</h2>
+<p class="mu">Assumed scheme: ElGamal/ECIES-style. The x-coordinate of the shared point is expanded into an XOR keystream.</p>
 <label>Message (shared with the Caesar section)</label><input type="text" id="msg" value="HELLO WORLD">
-<label>Private-key size: <b id="bl">14</b> bits (d ∈ [1, 2<sup id="bl2">14</sup>))</label><input type="range" id="bits" min="8" max="16" value="14">
+<label>Private-key size: <b id="bl">14</b> bits</label><input type="range" id="bits" min="8" max="16" value="14">
 <button id="gen">Generate key pair</button><button id="enc">Encrypt</button><button id="dec">Decrypt</button>
-<div class="box mono" id="eccout">Click "Generate key pair" to start.</div>
-<h3>Algorithm and role of the keys</h3>
-<ol><li><b>Key generation:</b> pick secret <code>d</code> (private), publish <code>Q = d·G</code> (public). Recovering d from Q is the elliptic-curve discrete logarithm problem (ECDLP).</li>
-<li><b>Encrypt:</b> pick a fresh random <code>k</code>, send <code>C1 = k·G</code>, compute shared secret <code>S = k·Q</code>, XOR the message with a keystream derived from S.x.</li>
-<li><b>Decrypt:</b> the receiver computes <code>d·C1 = d·k·G = k·Q = S</code> and rebuilds the same keystream. Public key encrypts (via k), private key decrypts, and k is a one-time ephemeral key.</li></ol>
-</section>
+<div class="box mono" id="eccout">Click “Generate key pair” to start.</div></section>
 
-<section id="caesar"><h2>2 · Caesar cipher</h2>
-<p class="mu">Encrypt <code>E(m) = (m + k) mod 26</code>, decrypt <code>D(c) = (c − k) mod 26</code>. The key k is the only secret.</p>
+<section id="caesar" data-t="2 · Caesar" data-c="E(m) = (m + k) mod 26, D(c) = (c − k) mod 26. One secret number, 25 useful keys, and letter frequencies survive encryption unchanged (just shifted)."><h2>2 · Caesar cipher</h2>
 <label>Shift k: <b id="kv">3</b></label><input type="range" id="k" min="0" max="25" value="3">
-<div class="box"><div class="mu">Plaintext</div><div class="row" id="pl"></div><div class="mu">Ciphertext</div><div class="row" id="ct"></div><div class="mu">Decrypted</div><div class="row" id="dc"></div></div>
-</section>
+<div class="box"><div class="mu">Plaintext</div><div class="row" id="pl"></div><div class="mu">Ciphertext</div><div class="row" id="ct"></div><div class="mu">Decrypted</div><div class="row" id="dc"></div></div></section>
 
-<section id="cmp"><h2>3 · Similarities and differences</h2>
-<table><tr><th></th><th>Toy ECC</th><th>Caesar</th></tr>
-<tr><td>Type</td><td>Asymmetric (public/private) with symmetric-style XOR layer</td><td>Symmetric, monoalphabetic substitution</td></tr>
-<tr><td>Encrypt / decrypt</td><td>Scalar multiplications; decryption recomputes the shared point</td><td>Add / subtract k mod 26 per letter</td></tr>
-<tr><td>Key space</td><td>2<sup>bits</sup> (toy) vs about 2²⁵⁶ in real use</td><td>26 (really 25)</td></tr>
-<tr><td>Statistics</td><td>Ciphertext looks uniform: fresh k means equal plaintexts encrypt differently</td><td>Letter frequencies preserved, only shifted: the fatal flaw</td></tr>
-<tr><td>Randomness</td><td>Probabilistic (ephemeral k)</td><td>Deterministic</td></tr>
-<tr><td>Shared idea</td><td colspan="2">Both are keyed, reversible transforms whose security depends entirely on the attacker not finding the key. Both fall to key search when the key space is small.</td></tr></table>
-</section>
-
-<section id="stat"><h2>4 · Statistical cryptanalysis of Caesar</h2>
-<p class="mu">The attacker tries all 26 shifts and scores each candidate against English letter statistics (chi-squared: lower is better), or by other methods. Use the reference table below (standard English frequencies, which would otherwise be learned from a large corpus).</p>
+<section id="stat" data-t="3 · Caesar attack" data-c="Try all 26 shifts and score each against language statistics (chi-squared, lower is better). Tall bar = most plausible shift. Pick the Italian table to attack Italian text."><h2>3 · Statistical attack on Caesar</h2>
 <label>Ciphertext</label><textarea id="cin" rows="3">KHOOR ZRUOG, WKLV LV D VHFUHW PHVVDJH WR VKRZ KRZ IUHTXHQF\ DQDO\VLV ZRUNV.</textarea>
-<label>Method</label><select id="meth"><option value="chi">Letter-frequency (chi-squared)</option><option value="bi">N-gram (bigram) score</option><option value="dict">Exhaustive search + common words</option></select>
-<button id="brk">Break it</button>
-<div class="bars" id="bars"></div><div style="height:22px"></div>
-<div class="box mono" id="sout"></div>
-<h3>Effectiveness test across ciphertext lengths</h3>
-<p class="mu">Random plaintext snippets and random keys, 300 trials per length per method.</p>
-<button id="run">Run experiment</button>
-<div class="legend"><span><i style="background:var(--bl)"></i>chi²</span><span><i style="background:var(--pu)"></i>bigram</span><span><i style="background:var(--ok)"></i>dictionary</span></div>
-<div class="bars" id="eb" style="height:170px"></div><div style="height:22px"></div>
-<p><b>Discussion.</b> Long texts converge to the true distribution, so success approaches 100% beyond about 40 letters. Very short texts (under about 10 letters) are ambiguous: several shifts yield plausible-looking text, and unusual text (rare letters, other languages, names) skews the statistics. Chi-squared uses only unigram counts; bigrams add context and help on short inputs; dictionary search needs no statistics but fails when the text has few common words. Since there are only 26 keys, a human can read all 26 candidates, so statistics only automate the choice.</p>
-</section>
+<label>Method</label><select id="meth"><option value="chi">Chi-squared, English letters</option><option value="chiit">Chi-squared, Italian letters</option><option value="bi">Bigram score (English)</option></select>
+<button id="brk">Break it</button><div class="bars" id="bars"></div><div class="box mono" id="sout"></div></section>
 
-<section id="eccatk"><h2>5 · Attacking the toy ECC</h2>
-<p>The public key Q is known. With d &lt; 2<sup>bits</sup>, the attacker simply computes <code>G, 2G, 3G, …</code> until it equals Q. Then d decrypts everything. Uses the key pair and ciphertext from section 1.</p>
-<button id="bf">Brute force (linear, ≤ 2<sup>b</sup> steps)</button><button id="bsgs">Baby-step giant-step (≈ 2<sup>b/2</sup> steps)</button>
+<section id="eccatk" data-t="4 · ECC attack" data-c="With d below 2^b, brute force tests G, 2G, 3G… up to 2^b steps. Baby-step giant-step needs only about 2^(b/2) steps, at the price of memory. A candidate is verified exactly (dG = Q), so no statistics are needed."><h2>4 · Attacking the toy ECC</h2>
+<p>Q is public and d &lt; 2<sup>b</sup>. Uses the key pair and ciphertext from section 1.</p>
+<button id="bf">Brute force (≤ 2<sup>b</sup> steps)</button><button id="bsgs">Baby-step giant-step (≈ 2<sup>b/2</sup>)</button>
 <div class="pb"><i id="pbar"></i></div><div class="box mono" id="aout">Generate a key pair and encrypt first.</div>
-<h3>Versus the Caesar attack</h3>
-<p>The Caesar attack needs statistics because the cipher leaks the language through the ciphertext: it can rank candidate keys by how plausible the plaintext is. Here the ciphertext looks random, so there is no signal to rank candidates; the attack only works because a candidate d can be <i>verified exactly</i> (dG = Q), with no statistics involved. Cost is a count of keys, not a property of the data.</p>
-<h3>Why it fails against a real configuration</h3>
-<p>With d ~ 2²⁵⁶, linear search needs about 2²⁵⁶ steps; the best generic algorithms (BSGS, Pollard's rho) still need about √n ≈ 2¹²⁸ group operations, which is infeasible in time and memory. The BSGS button above shows the square-root speedup: 16-bit keys need only about 2⁸ steps.</p>
-</section>
+<p class="mu">Unlike Caesar, the ciphertext leaks no language signal. The attack works only because each candidate key can be checked exactly, so cost is a count of keys, not a property of the data.</p></section>
 
-<section id="disc"><h2>6 · Weaknesses: key space versus design</h2>
+<section id="alt" data-t="5 · BSGS and Kangaroo" data-c="Two square-root attacks on a bounded private key. BSGS trades memory for speed: it stores about 2^(b/2) points. Kangaroo uses two random walks (tame and wild) that collide, and needs almost no memory. Run both on your key from section 1."><h2>5 · Two square-root attacks: BSGS and Kangaroo</h2>
+<ul><li><b>BSGS:</b> write d = i·m + j with m ≈ 2<sup>b/2</sup>. Store the baby steps jG, then take giant steps Q − i·mG until one matches. Fast, but needs about 2<sup>b/2</sup> points of memory.</li>
+<li><b>Kangaroo:</b> a tame kangaroo jumps from a known point, a wild one from Q, with the same jump rule. When they land on the same point, d is known. Same ~2<sup>b/2</sup> steps, but it keeps only a few “distinguished” points.</li></ul>
+<button id="rb">Run BSGS</button><button id="rk">Run Kangaroo</button>
+<div class="box mono" id="altout">Uses the key from section 1 (a new one is generated if missing).</div></section>
+
+<section id="cost" data-t="6 · Cost at 16–256 bits" data-c="Move the key-size slider from 128 to 256 bits. Each bar fills with the effort an attack needs and a traffic light says: green = feasible on your PC, yellow = needs a supercomputer, red = beyond the age of the universe or beyond any possible memory. The RAM badge shows whether your computer can hold what the attack needs.""><h2>6 · Attack cost extrapolated to 128- and 256-bit keys</h2>
+<p>The experiments on small keys (8–32 bits) give straight lines on a log–log plot: brute force grows with slope ≈ 0.96 (about 2<sup>b</sup>), while baby-step giant-step and kangaroo grow with slope ≈ 0.50 (about 2<sup>b/2</sup>). Extending the fitted lines gives the operation counts used below. The table compares theory with the time at the measured rate, and the last column recomputes the time at your chosen group-operation rate.</p>
+<label>Group operations per second: 10<sup id="rv">12</sup></label><input type="range" id="rate" min="6" max="15" value="12">
+<div class="box"><table id="ct5"><thead><tr><th>Attack</th><th>Key bits</th><th>Ops, theory</th><th>Time, measured rate</th><th>Time at chosen rate</th></tr></thead><tbody></tbody></table></div>
+<h3>Attack Simulator</h3>
+<div class="box" id="dash"><label>Key size: <b id="dbv">128</b> bits</label><input type="range" id="db" min="16" max="256" value="128">
+<label>RAM of your computer</label><select id="dr"><option value="16" selected>16 GB</option><option value="64">64 GB</option><option value="1024">1 TB</option></select>
+<button id="d16">16 bits</button><button id="d128">128 bits</button><button id="d256">256 bits</button>
+<div id="dbars"></div>
+<div class="mu">🟢 Feasible on your PC (≤ 1 year at ≈10⁷ ops/s) &nbsp; 🟡 Needs a supercomputer (≤ 100 years at ≈10¹² ops/s) &nbsp; 🔴 More than the age of the universe, or impossible resources. Bar = effort on a log scale (time or memory, whichever is worse).</div>
+<div class="grid" id="dcards"></div></div>
+<p class="mu">Assumptions: your PC does about 10⁷ group operations per second and a supercomputer about 10¹². Memory is my estimate: BSGS stores about 2<sup>b/2</sup> table entries of roughly 40 bytes; brute force and kangaroo keep only a few points (about 1 KB). “Beyond any cluster” means more than about 1 PB, and “impossible” means more than about 2<sup>77</sup> bytes, roughly all data storage on Earth (an order-of-magnitude figure). Theory: 2<sup>b−1</sup> for brute force, ≈2<sup>b/2+0.6</sup> for BSGS, ≈2<sup>b/2+1</sup> for kangaroo.</p>
+<p><b>Reading it:</b> the 0.5 slope is the whole story for time: halving the exponent turns 2<sup>256</sup> into 2<sup>128</sup>, still far beyond feasible, and brute force at 256 bits (≈ 2<sup>245.8</sup>) is not a meaningful comparison. Memory is what separates the square-root attacks. BSGS is the cheapest in operations, but at 128 bits its table would hold about 2<sup>64.5</sup> points, roughly 2<sup>70</sup> bytes (over a zettabyte), and about 2<sup>134</sup> bytes at 256 bits. Kangaroo costs a few bits more operations (2<sup>131.4</sup> vs 2<sup>128.4</sup> at 256 bits, against BSGS) but needs almost no memory, so in practice it is the square-root attack that matters, and it is still not feasible.</p></section>
+
+<section id="lang" data-t="7 · Letter distributions" data-c="Italian: vowels E, A, I, O dominate and K, J, W, X, Y are almost absent. Konkani in Devanagari uses many more symbols, including vowel signs, so a mod-26 Caesar does not apply and the distribution is flatter. The Konkani figures are rough estimates."><h2>7 · Letter frequencies: Italian and Konkani</h2>
+<p>Frequency analysis works because languages are lopsided. Italian is heavily vowel-driven (E, A, I, O together are roughly 45%), and its 21-letter alphabet gives a sharper peak pattern than English.</p>
+<div class="box"><b>Italian (% of letters)</b><div class="bars" id="it"></div></div>
+<div class="box sm"><b>Konkani (Devanagari, % of symbols)</b><div class="bars" id="ko"></div>
+<p class="mu wa">Warning: these Konkani values are rough illustrative estimates, not a measured corpus. They vary with the text and with how vowel signs (matras) and conjuncts are counted. Measure them on your own Konkani text before relying on them. The Italian figures are standard textbook values.</p></div>
+<p><b>Consequences for Caesar.</b> Konkani is written in Devanagari, with about 50 base symbols plus vowel signs, so a shift would be taken modulo a larger alphabet and the key space is bigger than 26. The attack is unchanged: shifting never alters the frequency <i>shape</i>, only its position. Konkani’s distribution is flatter than Italian’s (its top symbol, the vowel sign ा, is only about 10%), so more ciphertext is needed to get a clear peak. Italian differs from English mainly in its vowel-heavy profile, so chi-squared with the wrong language table can pick a wrong key on short texts. Try the Italian table in section 3.</p></section>
+
+<section id="disc" data-t="8 · Weaknesses" data-c="Small key space: brute force, BSGS, kangaroo, precomputed tables. Design flaws: keystream repeats every 32 bytes, no authentication, no KDF, weak k. Quantum: Shor breaks ECDLP at any size."><h2>8 · Weaknesses: key space versus design</h2>
 <div class="grid">
-<div class="box"><h3>From the restricted key space</h3><ul><li>Brute force and BSGS/rho in about 2<sup>b/2</sup> steps.</li><li>Any small-d table can be precomputed once for all users.</li><li>Key-recovery also breaks every past message encrypted to Q.</li></ul></div>
-<div class="box"><h3>From the toy design itself</h3><ul><li><b>Keystream reuse:</b> the stream is S.x repeated every 32 bytes, so long messages leak via XOR of repeated blocks (a Vigenère-like weakness).</li><li><b>No authentication:</b> ciphertexts are malleable; flip a bit, flip the plaintext bit.</li><li><b>Weak randomness for k:</b> a repeated or biased k gives repeated S and keystream, and leaks plaintext XORs.</li><li><b>No KDF:</b> use of raw S.x rather than a hash. <b>No point validation:</b> invalid-curve attacks on C1 are possible.</li></ul></div>
-<div class="box"><h3>Other attacks</h3><ul><li>Pollard's rho / kangaroo (best generic ECDLP, optimized for bounded intervals).</li><li>Known-plaintext: plaintext XOR ciphertext yields the keystream directly.</li><li>Side channels in double-and-add; fault attacks.</li><li>Quantum: Shor's algorithm breaks ECDLP at any size.</li></ul></div>
-</div></section>
+<div class="box"><h3>Restricted key space</h3><ul><li>Brute force, and BSGS or kangaroo in about 2<sup>b/2</sup> steps.</li><li>A small-d table can be precomputed once for everyone.</li><li>Recovering d breaks all past messages to Q.</li></ul></div>
+<div class="box"><h3>Toy design</h3><ul><li>Keystream is S.x repeated every 32 bytes (Vigenère-like).</li><li>No authentication: ciphertexts are malleable.</li><li>No KDF, no point validation, weak randomness for k.</li></ul></div>
+<div class="box"><h3>Other attacks</h3><ul><li>Known plaintext reveals the keystream directly.</li><li>Side channels in double-and-add.</li><li>Shor’s algorithm on a quantum computer.</li></ul></div></div></section>
 </main>
+
+<aside id="side"><h3>Subtitles</h3><div id="cap"></div><ol id="toc"></ol><button id="cl">Close</button></aside>
+<button id="tg">Subtitles</button>
 
 <script>
 const $=id=>document.getElementById(id);
-// ---- reveal
-const io=new IntersectionObserver(e=>e.forEach(x=>x.isIntersecting&&x.target.classList.add('in')),{threshold:.08});
-document.querySelectorAll('section').forEach(s=>io.observe(s));
-// ---- secp256k1 (BigInt)
+// ---- side window: subtitles follow the section in view
+const secs=[...document.querySelectorAll('section')];
+$('toc').innerHTML=secs.map(s=>`<li><a href="#${s.id}" data-id="${s.id}">${s.dataset.t}</a></li>`).join('');
+function setCap(s){secs.forEach(x=>x.classList.toggle('on',x===s));
+ document.querySelectorAll('#toc a').forEach(a=>a.classList.toggle('on',a.dataset.id===s.id));
+ $('cap').innerHTML=`<b>${s.dataset.t}</b>${s.dataset.c}`}
+const io=new IntersectionObserver(e=>e.forEach(x=>x.isIntersecting&&setCap(x.target)),{rootMargin:'-35% 0px -55% 0px'});
+secs.forEach(s=>io.observe(s));setCap(secs[0]);
+$('tg').onclick=()=>$('side').classList.toggle('open');$('cl').onclick=()=>$('side').classList.remove('open');
+document.querySelectorAll('#toc a').forEach(a=>a.onclick=()=>$('side').classList.remove('open'));
+// ---- secp256k1
 const P=(1n<<256n)-(1n<<32n)-977n,N=0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141n;
 const G=[0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798n,0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8n];
 const md=a=>((a%P)+P)%P;
 function inv(a){let[r0,r1,s0,s1]=[P,md(a),0n,1n];while(r1){const q=r0/r1;[r0,r1]=[r1,r0-q*r1];[s0,s1]=[s1,s0-q*s1]}return md(s0)}
-function add(A,B){if(!A)return B;if(!B)return A;
- let l;if(A[0]===B[0]){if(md(A[1]+B[1])===0n)return null;l=md(3n*A[0]*A[0]*inv(2n*A[1]))}else l=md((B[1]-A[1])*inv(B[0]-A[0]));
+function add(A,B){if(!A)return B;if(!B)return A;let l;if(A[0]===B[0]){if(md(A[1]+B[1])===0n)return null;l=md(3n*A[0]*A[0]*inv(2n*A[1]))}else l=md((B[1]-A[1])*inv(B[0]-A[0]));
  const x=md(l*l-A[0]-B[0]);return[x,md(l*(A[0]-x)-A[1])]}
 function mul(k,A){let R=null;while(k>0n){if(k&1n)R=add(R,A);A=add(A,A);k>>=1n}return R}
 const hex=(b,n=64)=>b.toString(16).padStart(n,'0'),sh=s=>s.slice(0,10)+'…'+s.slice(-6);
 const rnd=bits=>{const a=new Uint32Array(3);crypto.getRandomValues(a);let v=0n;a.forEach(x=>v=(v<<32n)|BigInt(x));return v%((1n<<BigInt(bits))-1n)+1n};
 const ks=(S,i)=>Number((S[0]>>BigInt(8*(i%32)))&255n);
 let K=null,CT=null;
-const out=(el,lines)=>{el.innerHTML=lines.map((l,i)=>`<div class="step" style="animation-delay:${i*.25}s">${l}</div>`).join('')};
-$('bits').oninput=e=>{$('bl').textContent=$('bl2').textContent=e.target.value};
+const out=(el,l)=>{el.innerHTML=l.map(x=>`<div class="step">${x}</div>`).join('')};
+$('bits').oninput=e=>$('bl').textContent=e.target.value;
 $('gen').onclick=()=>{const b=+$('bits').value,d=rnd(b),Q=mul(d,G);K={d,Q,b};CT=null;
  out($('eccout'),[`Private key d = <b class="bad">${d}</b> (${b}-bit)`,`Public key Q = d·G<br>x = ${sh(hex(Q[0]))}<br>y = ${sh(hex(Q[1]))}`])};
-$('enc').onclick=()=>{if(!K)return $('gen').click(),$('enc').click();
+$('enc').onclick=()=>{if(!K){$('gen').click()}
  const m=new TextEncoder().encode($('msg').value),k=rnd(64),C1=mul(k,G),S=mul(k,K.Q);
- const c=Array.from(m,(x,i)=>x^ks(S,i));CT={C1,c,len:m.length};
- out($('eccout'),[`Ephemeral k = ${k}`,`C1 = k·G, x = ${sh(hex(C1[0]))}`,`S = k·Q, x = ${sh(hex(S[0]))}`,`Ciphertext bytes = ${c.map(x=>hex(BigInt(x),2)).join(' ')}`])};
+ const c=Array.from(m,(x,i)=>x^ks(S,i));CT={C1,c};
+ out($('eccout'),[`Ephemeral k = ${k}`,`C1 = k·G, x = ${sh(hex(C1[0]))}`,`S = k·Q, x = ${sh(hex(S[0]))}`,`Ciphertext = ${c.map(x=>hex(BigInt(x),2)).join(' ')}`])};
 function dec(d){const S=mul(d,CT.C1);return new TextDecoder().decode(Uint8Array.from(CT.c,(x,i)=>x^ks(S,i)))}
-$('dec').onclick=()=>{if(!CT)return out($('eccout'),['Encrypt first.']);
- out($('eccout'),[`S' = d·C1 (equals k·Q)`,`Plaintext = <b class="ok">${dec(K.d).replace(/</g,'&lt;')}</b>`])};
+$('dec').onclick=()=>{if(!CT)return out($('eccout'),['Encrypt first.']);out($('eccout'),[`S′ = d·C1 (equals k·Q)`,`Plaintext = <b class="ok">${dec(K.d).replace(/</g,'&lt;')}</b>`])};
 // ---- Caesar
 const sft=(t,k)=>t.replace(/[a-z]/gi,ch=>{const b=ch<'a'?65:97;return String.fromCharCode((ch.charCodeAt(0)-b+k+26)%26+b)});
 function rows(){const m=$('msg').value,k=+$('k').value;$('kv').textContent=k;
- const draw=(id,t,c)=>{const r=$(id);const need=[...t];if(r.children.length!==need.length){r.innerHTML=need.map(()=>'<div class="l"></div>').join('')}
-  need.forEach((ch,i)=>{const e=r.children[i];e.textContent=ch===' '?'·':ch;e.className='l'+(c?' c':'')})};
+ const draw=(id,t,c)=>{$(id).innerHTML=[...t].map(ch=>`<div class="l${c?' c':''}">${ch===' '?'·':ch.replace('<','&lt;')}</div>`).join('')};
  const c=sft(m,k);draw('pl',m,0);draw('ct',c,1);draw('dc',sft(c,-k),0)}
 $('k').oninput=rows;$('msg').oninput=rows;rows();
-// ---- stats
+// ---- frequency data
 const F=[8.17,1.49,2.78,4.25,12.7,2.23,2.02,6.09,6.97,.15,.77,4.03,2.41,6.75,7.51,1.93,.1,5.99,6.33,9.06,2.76,.98,2.36,.15,1.97,.07];
-const BG='th he in er an re on at en nd ti es or te of ed is it al ar st to nt ng se ha as ou io le ve co me de hi ri ro ic ne ea ra ce li ch ll be ma si om ur'.split(' ');
-const W=' the and that with for are was this have from you not but all can had her one our out day get has him his how its may new now old see two way who '.split(' ').filter(Boolean);
-function score(c,k,m){const t=sft(c,-k).toLowerCase(),L=t.replace(/[^a-z]/g,'');
- if(m==='chi'){const n=L.length||1,cnt=Array(26).fill(0);for(const ch of L)cnt[ch.charCodeAt(0)-97]++;
-  return cnt.reduce((s,o,i)=>{const e=F[i]*n/100;return s+(o-e)**2/e},0)}
+const IT={a:11.74,b:.92,c:4.5,d:3.73,e:11.79,f:.95,g:1.64,h:1.54,i:11.28,l:6.51,m:2.51,n:6.88,o:9.83,p:3.05,q:.51,r:6.37,s:4.98,t:5.62,u:3.01,v:2.1,z:.49};
+const FI=Array.from({length:26},(_,i)=>IT[String.fromCharCode(97+i)]||.05);
+const KO=[['ा',10],['र',5.5],['ि',4.8],['क',5],['े',4.5],['न',4.2],['ल',4],['त',3.8],['ं',3.5],['स',3.3],['म',3.2],['ो',3],['्',2.8],['ळ',1.2],['ण',1.5],['ी',3.4],['ध',1.4],['ग',2],['च',1.8],['अ',2.3]];
+function chart(id,data,top,vals){const mx=Math.max(...data.map(d=>d[1]));
+ $(id).innerHTML=data.map(([c,v])=>`<div class="bar" style="height:${v/mx*100}%">${vals?`<b>${v}</b>`:''}<span>${c}</span></div>`).join('')}
+chart('it',Object.entries(IT).sort((a,b)=>b[1]-a[1]).map(([c,v])=>[c.toUpperCase(),v]),0,true);chart('ko',KO);
+const BG='th he in er an re on at en nd ti es or te of ed is it al ar st to nt ng se ha as ou io le ve co me de'.split(' ');
+function score(c,k,m){const L=sft(c,-k).toLowerCase().replace(/[^a-z]/g,'');
  if(m==='bi'){let s=0;for(let i=0;i<L.length-1;i++)if(BG.includes(L.slice(i,i+2)))s++;return -s}
- const ws=t.replace(/[^a-z ]/g,' ').split(/\s+/);return -ws.filter(w=>W.includes(w)).length}
-const best=(c,m)=>{let b=0,bs=1e9;const all=[];for(let k=0;k<26;k++){const s=score(c,k,m);all.push(s);if(s<bs){bs=s;b=k}}return{b,all}};
-$('brk').onclick=()=>{const c=$('cin').value,m=$('meth').value,{b,all}=best(c,m);
- const mn=Math.min(...all),mx=Math.max(...all),rg=(mx-mn)||1;
- $('bars').innerHTML=all.map((s,k)=>`<div class="bar${k===b?' best':''}" data-h="${(1-(s-mn)/rg)*92+8}" style="height:2px"><span>${k}</span></div>`).join('');
- requestAnimationFrame(()=>requestAnimationFrame(()=>document.querySelectorAll('#bars .bar').forEach(e=>e.style.height=e.dataset.h+'%')));
- out($('sout'),[`Bar height = plausibility of each shift (tall = best). Best key: <b class="ok">k = ${b}</b>`,`Recovered plaintext: <b class="ok">${sft(c,-b).replace(/</g,'&lt;')}</b>`])};
-const CORPUS=('the history of cryptography is long and full of clever ideas people have always wanted to keep messages secret from rivals and so they invented ciphers that hide meaning inside strange looking symbols a simple shift of the alphabet was once enough to fool a careless reader but patient analysts soon noticed that some letters appear far more often than others and that simple fact breaks the cipher modern systems rely on hard mathematical problems instead of tricks with letters and they are studied openly by researchers all around the world every year new attacks are published and the designs that survive become trusted standards used by banks hospitals and ordinary people sending private messages to their friends').replace(/[^a-z]/g,'');
-$('run').onclick=async()=>{const Ls=[5,10,20,40,80,160],ms=['chi','bi','dict'],cols=['var(--bl)','var(--pu)','var(--ok)'];
- $('eb').innerHTML='';const box=$('eb');
- for(const L of Ls){const g=document.createElement('div');g.style.cssText='flex:1;display:flex;align-items:flex-end;gap:2px;height:100%;position:relative';
-  const res=ms.map(m=>{let ok=0;for(let t=0;t<300;t++){const st=Math.floor(Math.random()*(CORPUS.length-L)),k=Math.floor(Math.random()*25)+1,p=CORPUS.slice(st,st+L);
-    const c=sft(p,k);if(best(L<20?c:c,m).b===k)ok++}return ok/3});
-  g.innerHTML=res.map((r,i)=>`<div class="bar" style="height:2px;background:${cols[i]}" data-h="${Math.max(r,2)}" title="${r.toFixed(0)}%"></div>`).join('')+`<span style="position:absolute;bottom:-20px;left:0;right:0;text-align:center;font-size:.7rem;color:var(--mu)">${L}</span>`;
-  box.appendChild(g);await new Promise(r=>setTimeout(r,30));
-  requestAnimationFrame(()=>g.querySelectorAll('.bar').forEach(e=>e.style.height=e.dataset.h+'%'));
-  g.querySelectorAll('.bar').forEach((e,i)=>e.insertAdjacentHTML('afterbegin',`<span style="top:-16px;bottom:auto;font-size:.6rem">${res[i].toFixed(0)}</span>`))}};
+ const T=m==='chiit'?FI:F,n=L.length||1,cnt=Array(26).fill(0);for(const ch of L)cnt[ch.charCodeAt(0)-97]++;
+ return cnt.reduce((s,o,i)=>{const e=T[i]*n/100;return s+(o-e)**2/e},0)}
+$('brk').onclick=()=>{const c=$('cin').value,m=$('meth').value;let b=0,bs=1e9;const all=[];
+ for(let k=0;k<26;k++){const s=score(c,k,m);all.push(s);if(s<bs){bs=s;b=k}}
+ const mn=Math.min(...all),rg=(Math.max(...all)-mn)||1;
+ $('bars').innerHTML=all.map((s,k)=>`<div class="bar${k===b?' best':''}" style="height:${(1-(s-mn)/rg)*92+8}%"><span>${k}</span></div>`).join('');
+ out($('sout'),[`Best key: <b class="ok">k = ${b}</b>`,`Recovered: <b class="ok">${sft(c,-b).replace(/</g,'&lt;')}</b>`])};
 // ---- ECC attacks
 const log=a=>$('aout').innerHTML=a.map(x=>`<div class="step">${x}</div>`).join('');
 const frame=()=>new Promise(r=>requestAnimationFrame(r));
-function ready(){if(!K||!CT){log(['Please generate a key pair and encrypt a message in section 1 first.']);return false}return true}
-function done(d,steps,t){$('pbar').style.width='100%';const ok=mul(d,G)[0]===K.Q[0];
- log([`Recovered d = <b class="ok">${d}</b> (true d = ${K.d}) ${d===K.d?'✔':'(equivalent key)'}`,`${steps} group operations, ${t.toFixed(0)} ms`,`Decrypted: <b class="ok">${dec(d).replace(/</g,'&lt;')}</b>`])}
+function ready(){if(!K||!CT){log(['Generate a key pair and encrypt in section 1 first.']);return false}return true}
+function done(d,steps,t){$('pbar').style.width='100%';log([`Recovered d = <b class="ok">${d}</b> (true d = ${K.d}) ${d===K.d?'✔':'(equivalent key)'}`,`${steps} group operations, ${t.toFixed(0)} ms`,`Decrypted: <b class="ok">${dec(d).replace(/</g,'&lt;')}</b>`])}
 $('bf').onclick=async()=>{if(!ready())return;const t0=performance.now(),lim=1<<K.b;let R=G,d=1;
- while(d<=lim){for(let i=0;i<300&&d<=lim;i++,d++){if(R[0]===K.Q[0])return done(R[1]===K.Q[1]?d:BigInt(0)+N-BigInt(d),d,performance.now()-t0);R=add(R,G)}
+ while(d<=lim){for(let i=0;i<300&&d<=lim;i++,d++){if(R[0]===K.Q[0])return done(R[1]===K.Q[1]?BigInt(d):N-BigInt(d),d,performance.now()-t0);R=add(R,G)}
   $('pbar').style.width=(d/lim*100)+'%';log([`Testing d = ${d} of ${lim}…`]);await frame()}};
 $('bsgs').onclick=async()=>{if(!ready())return;const t0=performance.now(),m=1<<Math.ceil(K.b/2),T=new Map();let R=null,ops=0;
- for(let j=0;j<m;j++){T.set(R?R[0]+':'+R[1]:'inf',j);R=add(R,G);ops++;if(j%200===0){$('pbar').style.width=(j/m*50)+'%';log([`Baby steps: stored ${j} of ${m} multiples of G`]);await frame()}}
+ for(let j=0;j<m;j++){T.set(R?R[0]+':'+R[1]:'inf',j);R=add(R,G);ops++;if(j%200===0){$('pbar').style.width=(j/m*50)+'%';log([`Baby steps: ${j} of ${m}`]);await frame()}}
  const mG=mul(BigInt(m),G),nmG=[mG[0],md(-mG[1])];let Y=K.Q;
  for(let i=0;i<=m;i++){const key=Y?Y[0]+':'+Y[1]:'inf';if(T.has(key))return done(BigInt(i*m+T.get(key)),ops,performance.now()-t0);
   Y=add(Y,nmG);ops++;if(i%200===0){$('pbar').style.width=(50+i/m*50)+'%';log([`Giant steps: ${i} of ${m}`]);await frame()}}};
+// ---- cost extrapolation (section 6)
+const fit={bf:b=>.96*b-.2,bsgs:b=>.5*b+.5,kang:b=>.5*b+3.3},th={bf:b=>b-1,bsgs:b=>b/2+.6,kang:b=>b/2+1};
+const ROWS=[['Brute force','bf',128,122.6,127,'8.31 × 10²³ years'],['Brute force','bf',256,245.8,255,'9.58 × 10⁶⁰ years'],
+['Baby-step giant-step','bsgs',128,64.5,64.6,'1.13 × 10⁷ years'],['Baby-step giant-step','bsgs',256,128.4,128.6,'1.98 × 10²⁶ years'],
+['Kangaroo','kang',128,67.3,65,'1.55 × 10⁸ years'],['Kangaroo','kang',256,131.4,129,'3.13 × 10²⁷ years']];
+const sup=n=>String(n).replace(/-/g,'⁻').replace(/\d/g,d=>'⁰¹²³⁴⁵⁶⁷⁸⁹'[d]);
+function fmt(l10){if(l10<-1)return '< 1 month';if(l10<0.5)return (Math.pow(10,l10)).toFixed(1)+' years';const e=Math.floor(l10);return (Math.pow(10,l10-e)).toFixed(2)+' × 10'+sup(e)+' years'}
+function costs(){const r=+$('rate').value;$('rv').textContent=r;
+ $('ct5').tBodies[0].innerHTML=ROWS.map(([n,k,b,f,t,m])=>{const e=f??t,y=e*Math.log10(2)-r-Math.log10(31557600);
+  return `<tr><td>${n}</td><td>${b}</td><td>2${sup(t)}</td><td>${m}</td><td class="${y<9?'ok':'bad'}">${fmt(y)}</td></tr>`}).join('')}
+$('rate').oninput=costs;costs();
+// ---- section 5 demo
+function bsgsRun(){const m=1<<Math.ceil(K.b/2),T=new Map();let R=null,ops=0;
+ for(let j=0;j<m;j++){T.set(R?R[0]+':'+R[1]:'i',j);R=add(R,G);ops++}
+ const mG=mul(BigInt(m),G),nm=[mG[0],md(-mG[1])];let Y=K.Q;
+ for(let i=0;i<=m;i++){const k=Y?Y[0]+':'+Y[1]:'i';if(T.has(k))return{d:BigInt(i*m+T.get(k)),ops,mem:m};Y=add(Y,nm);ops++}}
+function kangRun(){const b=K.b,N=1<<b,k=Math.ceil(b/2)+1,J=[],t=Math.ceil(b/4)+1,mask=BigInt((1<<t)-1),n=4*Math.ceil(Math.sqrt(N));let q=G,ops=0,mem=0;
+ for(let i=0;i<k;i++){J.push(q);q=add(q,q)}
+ for(let seed=0;seed<8;seed++){const h=P=>(Number((P[0]>>8n)&0xFFFFn)+seed)%k;let X=mul(BigInt(N),G),dt=0;const D=new Map();
+  for(let i=0;i<n;i++){const j=h(X);X=add(X,J[j]);dt+=2**j;ops++;if((X[0]&mask)===0n)D.set(X[0]+':'+X[1],dt)}
+  mem=Math.max(mem,D.size);let W=K.Q,dw=0;
+  while(dw<=N+dt){const key=W[0]+':'+W[1];if(D.has(key)){const d=BigInt(N+D.get(key)-dw);if(mul(d,G)[0]===K.Q[0])return{d,ops,mem}}
+   const j=h(W);W=add(W,J[j]);dw+=2**j;ops++}}
+ return null}
+function runAlt(f,name){if(!K)$('gen').click();const t0=performance.now(),r=f(),ms=performance.now()-t0,ref=Math.pow(2,K.b/2).toFixed(0);
+ out($('altout'),r?[`${name} on a ${K.b}-bit key: d = <b class="ok">${r.d}</b> ${r.d===K.d?'✔':'(equivalent key)'}`,`${r.ops} group operations (reference 2<sup>b/2</sup> = ${ref}), ${ms.toFixed(0)} ms`,`Memory: ${r.mem} stored point${r.mem===1?'':'s'}`]:[`${name}: not found, run it again.`])}
+$('rb').onclick=()=>runAlt(bsgsRun,'BSGS');$('rk').onclick=()=>runAlt(kangRun,'Kangaroo');
+// ---- Attack Simulator
+const AT=[{n:'Brute force',i:'🔨',f:b=>.96*b-.2,m:()=>6},{n:'Baby-step giant-step',i:'📦',f:b=>.5*b+.5,m:b=>b/2+5.3},{n:'Kangaroo',i:'🦘',f:b=>.5*b+3.3,m:()=>10}];
+const L2=Math.log10(2),SEC=Math.log10(31557600),AGE=10.14,CL=['#5cf2c0','#ffc66b','#ff7aa8'],cl=(v,a,b)=>Math.max(0,Math.min(1,(v-a)/(b-a)));
+const lvT=l=>l<=0?0:l<=2?1:2;
+function bt(l){const U=['B','KB','MB','GB','TB','PB','EB','ZB','YB'],i=Math.floor(l/10);if(i>8)return '10'+sup(Math.round(l*L2))+' bytes';const v=Math.pow(2,l-10*i);return (v>=100?v.toFixed(0):v.toFixed(1))+' '+U[i]}
+function dash(){const b=+$('db').value,ram=30+Math.log2(+$('dr').value);$('dbv').textContent=b;let bars='',cards='';
+ AT.forEach(a=>{const e=a.f(b),m=a.m(b),tp=e*L2-7-SEC,ts=e*L2-12-SEC,lm=m<=ram?0:m<=50?1:2;
+  const lv=(lvT(tp)===0&&lm===0)?0:(lvT(ts)<=1&&lm<=1)?1:2;
+  const eff=Math.max(cl(ts,-6,AGE),cl(m,0,77),.04),c=CL[lv];
+  const rb=['✔ OK RAM','! INSUFFICIENT RAM','✖ IMPOSSIBLE RAM'][lm];
+  const bd=(t,k)=>`<span class="bd" style="color:${CL[k]};border-color:${CL[k]}">${t}</span>`;
+  let msg;if(lv===0)msg='✔ Feasible on your PC.';else if(lv===1)msg='⚠ Not on your PC alone: needs a supercomputer'+(lm?' and far more RAM than you have':'')+'. This cannot be done on your computer.';
+  else if(ts>AGE)msg='✖ Takes longer than the age of the universe. This requires an impossible amount of time.';
+  else if(m>77)msg='✖ Needs more memory than all the storage on Earth. This requires an impossible amount of resources.';
+  else if(m>50)msg='✖ Needs RAM beyond any cluster ever built. Impossible in practice.';else msg='✖ Not realistic: far too many years even on a supercomputer. This cannot be done on your computer.';
+  const tl=`<div class="tl">${[0,1,2].map(k=>`<u style="${k===lv?`background:${CL[k]};box-shadow:0 0 10px ${CL[k]}`:''}"></u>`).join('')}</div>`;
+  bars+=`<div class="r"><div class="nm">${a.i} ${a.n}</div><div class="tk"><i style="width:${eff*100}%;background:${c}"></i></div>${tl}${bd(rb+' · '+bt(m),lm)}</div>`;
+  const mb=(t,p,k,v)=>`<div class="mb"><div><span>${t}</span><span>${v}</span></div><div class="tk" style="height:9px"><i style="width:${Math.max(p,.03)*100}%;background:${CL[k]}"></i></div></div>`;
+  cards+=`<div class="box cd" style="border-color:${c}"><div style="font-weight:700">${a.i} ${a.n} ${tl}</div><div class="mu">≈ 2${sup(Math.round(e*10)/10)} group operations</div>
+  ${mb('Time on your PC',cl(tp,-6,AGE),lvT(tp),fmt(tp))}${mb('Time on a supercomputer',cl(ts,-6,AGE),lvT(ts),fmt(ts))}${mb('Memory needed',cl(m,0,77),lm,bt(m))}
+  <div style="margin-top:8px">${bd(rb,lm)} ${bd(['FEASIBLE','SUPERCOMPUTER','IMPOSSIBLE'][lv],lv)}</div><p style="margin:8px 0 0;color:${c}">${msg}</p></div>`});
+ $('dbars').innerHTML=bars;$('dcards').innerHTML=cards}
+$('db').oninput=dash;$('dr').onchange=dash;$('d16').onclick=()=>{$('db').value=16;dash()};$('d128').onclick=()=>{$('db').value=128;dash()};$('d256').onclick=()=>{$('db').value=256;dash()};dash();
 </script></body></html>
