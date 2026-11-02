@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Welford &amp; Sampling Statistics</title>
+<style>
+:root{color-scheme:dark;--bg:#0d0a24;--card:#1a1440;--card2:#241b5c;--tx:#ece9ff;--mu:#a9a3d9;--pu:#a56bff;--bl:#4da3ff;--ok:#5cf2c0;--bad:#ff7aa8;--wa:#ffc66b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.6 system-ui,-apple-system,Segoe UI,sans-serif;overflow-x:hidden}
+header{text-align:center;padding:56px 20px 16px}
+h1{font-size:clamp(1.9rem,5vw,3.1rem);margin:0;background:linear-gradient(90deg,var(--pu),var(--bl));-webkit-background-clip:text;background-clip:text;color:transparent}
+header p{color:var(--mu);max-width:720px;margin:12px auto}
+main{max-width:900px;margin:0 auto;padding:0 16px 40px}
+@media(min-width:1100px){main{margin-left:max(16px,calc((100% - 300px - 900px)/2));margin-right:auto}header{padding-right:300px}body{padding-right:300px}}
+section{background:linear-gradient(145deg,var(--card),var(--card2));border:1px solid #ffffff22;border-radius:20px;padding:24px;margin:24px 0;scroll-margin-top:16px}
+section.on{border-color:var(--pu);box-shadow:0 0 0 1px var(--pu)}
+h2{margin:0 0 8px;color:#d6c4ff}h3{color:var(--bl);margin:16px 0 6px;font-size:1rem}
+p,li{color:#d8d4f5}code{font-family:ui-monospace,Menlo,monospace;font-size:.85rem;background:#0006;padding:1px 6px;border-radius:6px;color:var(--ok)}
+label{display:block;font-size:.85rem;color:var(--mu);margin:10px 0 4px}
+label.inl{display:flex;align-items:center;gap:8px}
+select{width:100%;background:#0a0720;border:1px solid #6b55c9;color:var(--tx);border-radius:10px;padding:9px 12px;font:inherit}
+input[type=range]{width:100%;accent-color:var(--pu)}input[type=checkbox]{width:auto;accent-color:var(--pu)}
+button{background:linear-gradient(90deg,var(--pu),var(--bl));color:#fff;border:0;padding:10px 18px;border-radius:10px;font:600 .9rem system-ui,sans-serif;cursor:pointer;margin:8px 8px 0 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.box{background:#0a072088;border:1px solid #ffffff14;border-radius:14px;padding:14px;margin-top:12px;overflow-x:auto}
+.cv{position:relative;height:300px}
+.eq{background:#0a072088;border:1px solid #ffffff14;border-radius:12px;padding:8px 10px;margin:10px 0;overflow-x:auto;text-align:center}.eq mjx-container{margin:0!important}
+mjx-container{font-size:1.1em}
+pre{background:#0006;border-radius:12px;padding:12px;overflow-x:auto;font:.85rem/1.5 ui-monospace,Menlo,monospace;color:var(--ok);margin:10px 0}
+table{width:100%;border-collapse:collapse;font-size:.85rem}td,th{padding:7px;border-bottom:1px solid #ffffff18;text-align:left}th{color:var(--bl);font-size:.72rem;text-transform:uppercase}
+.ok{color:var(--ok)}.bad{color:var(--bad)}.mu{color:var(--mu);font-size:.85rem}.wa{color:var(--wa)}
+details{background:#0a072088;border:1px solid #ffffff14;border-radius:14px;margin-top:12px}
+summary{cursor:pointer;padding:14px 16px;font-weight:700;color:#d6c4ff}details[open] summary{border-bottom:1px solid #ffffff14}
+.db{padding:4px 16px 14px}
+#side{position:fixed;top:0;right:0;bottom:0;width:290px;background:#120d33f2;border-left:1px solid var(--pu);padding:calc(18px + env(safe-area-inset-top,0px)) 16px calc(18px + env(safe-area-inset-bottom,0px));z-index:50;overflow-y:auto;backdrop-filter:blur(10px);transition:transform .3s}
+#side h3{margin:0 0 8px;color:var(--ok)}
+#cap{background:#0006;border-radius:12px;padding:12px;min-height:150px;font-size:.9rem;border-left:3px solid var(--ok)}#cap b{display:block;color:var(--pu);margin-bottom:4px}
+#live{margin-top:12px;font:.78rem ui-monospace,monospace;color:var(--wa);background:#0006;border-radius:10px;padding:8px 10px}
+#toc{list-style:none;padding:0;margin:14px 0 0}#toc a{display:block;padding:6px 10px;border-radius:8px;color:var(--mu);text-decoration:none;font-size:.85rem}#toc a.on{background:var(--card2);color:var(--tx)}
+footer{text-align:center;font-size:.62rem;opacity:.4;padding:0 16px calc(28px + env(safe-area-inset-bottom,0px));color:var(--mu);letter-spacing:.03em}
+#tg,#cl{display:none}
+@media(max-width:1099px){#side{transform:translateX(100%)}#side.open{transform:none}
+#tg{display:block;position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:60;border-radius:50px}#cl{display:inline-block;margin-top:12px}}
+</style>
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head><body>
+<header><h1>Online Statistics &amp; Cyber Threats</h1>
+<p>Knuth &amp; Welford recurrences, numerical stability, and a Monte Carlo study of m attackers against n systems: sample means, sample variances, LLN and CLT.</p></header>
+<main>
+
+<section id="ex1" data-t="1 · Knuth & Welford" data-c="Exercise 1. Step-by-step derivation of the online mean (Knuth), of the sum of squared differences M₂ (Welford) and of the unbiased variance S² = M₂/(k−1). The three-line loop at the end is exactly what the simulations below run."><h2>1 · Exercise 1: Knuth &amp; Welford recurrences</h2>
+<h3>Knuth: online mean</h3>
+<div class="eq">\[\begin{aligned}\bar x_k&=\frac1k\sum_{i=1}^{k}x_i=\frac1k\Bigl(\sum_{i=1}^{k-1}x_i+x_k\Bigr)=\frac1k\bigl((k-1)\,\bar x_{k-1}+x_k\bigr)\\[4pt]&=\bar x_{k-1}+\frac{x_k-\bar x_{k-1}}{k}\end{aligned}\]</div>
+<h3>Welford: sum of squared differences</h3>
+<p>Define \(M_{2,k}=\sum_{i=1}^{k}(x_i-\bar x_k)^2\) and \(\delta_k=x_k-\bar x_{k-1}\). Knuth gives \(\bar x_k-\bar x_{k-1}=\delta_k/k\), hence \(x_k-\bar x_k=\delta_k\frac{k-1}{k}\).</p>
+<p><b>Step 1.</b> Separate the last term of the sum:</p>
+<div class="eq">\[M_{2,k}=\sum_{i=1}^{k-1}(x_i-\bar x_k)^2+(x_k-\bar x_k)^2\]</div>
+<p><b>Step 2.</b> For \(i=1,\dots,k-1\) substitute \(x_i-\bar x_k=(x_i-\bar x_{k-1})-\dfrac{\delta_k}{k}\) and expand the square:</p>
+<div class="eq">\[\sum_{i=1}^{k-1}(x_i-\bar x_k)^2=\sum_{i=1}^{k-1}(x_i-\bar x_{k-1})^2-\frac{2\delta_k}{k}\underbrace{\sum_{i=1}^{k-1}(x_i-\bar x_{k-1})}_{=\,0}+(k-1)\frac{\delta_k^{2}}{k^{2}}\]</div>
+<p>The cross term vanishes because the deviations from the mean \(\bar x_{k-1}\) sum to zero, and the first sum is \(M_{2,k-1}\). Hence</p>
+<div class="eq">\[\sum_{i=1}^{k-1}(x_i-\bar x_k)^2=M_{2,k-1}+(k-1)\frac{\delta_k^{2}}{k^{2}}\]</div>
+<p><b>Step 3.</b> The last term is \((x_k-\bar x_k)^2=\dfrac{(k-1)^2}{k^2}\,\delta_k^2\).</p>
+<p><b>Step 4.</b> Add the two pieces:</p>
+<div class="eq">\[M_{2,k}=M_{2,k-1}+\frac{\delta_k^{2}}{k^{2}}\bigl[(k-1)+(k-1)^2\bigr]=M_{2,k-1}+\frac{k-1}{k}\,\delta_k^{2}\]</div>
+<p><b>Step 5.</b> Since \(x_k-\bar x_k=\delta_k\frac{k-1}{k}\), we have \((x_k-\bar x_{k-1})(x_k-\bar x_k)=\frac{k-1}{k}\delta_k^2\). Therefore</p>
+<div class="eq">\[\boxed{M_{2,k}=M_{2,k-1}+(x_k-\bar x_{k-1})(x_k-\bar x_k)}\]</div>
+<h3>Unbiased sample variance (Bessel’s correction)</h3>
+<div class="eq">\[S_k^2=\frac{M_{2,k}}{k-1},\qquad \sum_{i}(X_i-\mu)^2=\sum_i(X_i-\bar X)^2+k(\bar X-\mu)^2\ \Rightarrow\ k\sigma^2=\mathbb E[M_{2,k}]+k\cdot\frac{\sigma^2}{k}\]</div>
+<p>So \(\mathbb E[M_{2,k}]=(k-1)\sigma^2\) and \(\mathbb E[S_k^2]=\sigma^2\).</p>
+<h3>Core algorithm (the loop used by every simulation below)</h3>
+<pre>count += 1;
+let delta = x - mean;
+mean += delta / count;
+let delta2 = x - mean;
+M2 += delta * delta2;        // variance = M2 / (count - 1)</pre></section>
+
+<section id="stab" data-t="2 · Numerical stability" data-c="Naive one-pass formula (Σx² − (Σx)²/n)/(n−1) against Welford, in IEEE-754 doubles. With a huge offset and tiny variance the naive formula suffers catastrophic subtractive cancellation and can return zero or a negative variance. Welford stays accurate."><h2>2 · Naive formula vs Welford: catastrophic cancellation</h2>
+<p>Data: \(x_i=10^{e}+d_i\), where the \(d_i\) are small integers. The true variance does not depend on \(e\), but the naive formula \(\frac{1}{n-1}\bigl(\sum x_i^2-\frac{(\sum x_i)^2}{n}\bigr)\) subtracts two nearly equal huge numbers.</p>
+<div class="grid"><div><label>Offset \(10^{e}\): e = <b id="sov">9</b></label><input type="range" id="so" min="0" max="15" value="9">
+<label>Data: n = <b id="snv">10</b></label><input type="range" id="sn" min="3" max="1000" value="10"></div>
+<div><label>Data pattern</label><select id="sd"><option value="seq">10^e + 1, 10^e + 2, …, 10^e + n</option><option value="rnd">10^e + random integer in 0…9</option></select></div></div>
+<div class="box"><table id="stb"></table></div>
+<div class="box"><div class="cv"><canvas id="cs"></canvas></div></div>
+<p class="mu">Relative error of the variance against the exact value, for e = 0…15 (log scale; values at 10⁻¹⁷ mean “exact to machine precision”). The naive error explodes once the offset passes about 10⁷, while Welford stays flat.</p></section>
+
+<section id="setup" data-t="3 · Cyber threat model" data-c="Exercise 2. m attackers, n attempts each, every attempt gives a score in [0,10]. Choose one of three distributions and its parameters, then press Run. The analytic mean μ and variance σ² are shown for the chosen law."><h2>3 · Exercise 2: m attackers, n attempts, score in [0, 10]</h2>
+<p>Each of the \(m\) attackers makes \(n\) independent attempts; an attempt scores \(x\in[0,10]\). For every attacker the page tracks online (Welford) the sample mean \(\bar X_i\) and the sample variance \(S_i^2\) for \(k=1,\dots,n\).</p>
+<div class="grid"><div><label>Score distribution</label><select id="dt"><option value="bin">Binomial B(10, p)</option><option value="cus">Custom discrete threat scale</option><option value="zi">Zero-inflated cyber mixture</option></select>
+<div id="pw"><label>p = <b id="ppv">0.30</b></label><input type="range" id="pp" min="0.05" max="0.95" step="0.05" value="0.3"></div>
+<div id="zw" style="display:none"><label>P(blocked) = <b id="pzv">0.60</b></label><input type="range" id="pz" min="0" max="0.95" step="0.05" value="0.6"></div></div>
+<div><label>Attackers m: <b id="msv">500</b></label><input type="range" id="ms" min="10" max="2000" step="10" value="500">
+<label>Attempts n: <b id="nsv">100</b></label><input type="range" id="ns" min="5" max="1000" step="5" value="100">
+<label class="inl"><input type="checkbox" id="st"> Stream animation (step by step)</label>
+<button id="run">Run simulation</button></div></div>
+<div class="box" id="dinfo"></div>
+<div class="box"><div class="cv" style="height:220px"><canvas id="c0"></canvas></div></div>
+<p class="mu">Distribution of a single score (bins of width 1 on [0, 10]).</p></section>
+
+<section id="res" data-t="4 · Simulation results" data-c="Chart 1: sample means of the first attackers converge to μ (LLN). Chart 2: histogram of the m sample means with the Gaussian N(μ, σ²/k) (CLT). Chart 3: histogram of the m sample variances concentrating around σ². Drag k, or use the stream animation, to watch it happen."><h2>4 · Convergence of sample means and variances</h2>
+<label>Step k (attempts so far): <b id="kv">100</b></label><input type="range" id="ks" min="1" max="100" value="100">
+<h3>Chart 1: trajectories of the sample mean (LLN)</h3>
+<div class="box"><div class="cv"><canvas id="c1"></canvas></div></div>
+<p class="mu">First 8 attackers. Green: μ. Dashed yellow: \(\mu\pm2\sigma/\sqrt k\).</p>
+<h3>Chart 2: sampling distribution of the means (CLT)</h3>
+<div class="box"><div class="cv"><canvas id="c2"></canvas></div></div>
+<p class="mu">Bars: histogram of the m sample means at step k. Green curve: \(\mathcal N(\mu,\sigma^2/k)\). Yellow line: μ.</p>
+<h3>Chart 3: sampling distribution of the sample variances</h3>
+<div class="box"><div class="cv"><canvas id="c3"></canvas></div></div>
+<p class="mu">Bars: histogram of the m values of \(S^2\) at step k. Yellow line: σ². For k = 1 the sample variance is undefined.</p>
+<div class="box"><table id="tbr"></table></div></section>
+
+<section id="imp" data-t="5 · Impact of n" data-c="How the sample size n changes the spread of both estimators. Var(X̄) = σ²/n shrinks like 1/n. The variance of S² also shrinks, roughly like 1/n, which proves that S² is a consistent estimator of σ². Points are simulated, lines are theory."><h2>5 · Impact of the sample size n</h2>
+<div class="eq">\[\operatorname{Var}(\bar X_n)=\frac{\sigma^2}{n},\qquad \operatorname{Var}(S_n^2)=\frac1n\Bigl(\mu_4-\frac{n-3}{n-1}\,\sigma^4\Bigr)\ \xrightarrow{\,n\to\infty\,}\ 0\]</div>
+<p class="mu">Here \(\mu_4=\mathbb E[(X-\mu)^4]\). For a Gaussian \(\operatorname{Var}(S_n^2)=\frac{2\sigma^4}{n-1}\). Both variances go to 0, so \(\bar X\to\mu\) and \(S^2\to\sigma^2\) in probability (consistency).</p>
+<h3>Variance of the sample mean across attackers</h3>
+<div class="box"><div class="cv"><canvas id="c4"></canvas></div></div>
+<h3>Variance of the sample variance across attackers</h3>
+<div class="box"><div class="cv"><canvas id="c5"></canvas></div></div>
+<p class="mu">Both axes are logarithmic. Points are measured on the m attackers up to step k; lines are the exact formulas.</p></section>
+
+<section id="found" data-t="6 · Theoretical Foundations &amp; Key Findings" data-c="Theoretical foundations and key findings of the study: short formal answers on unbiasedness, LLN, CLT, Bessel’s correction, standard errors and numerical stability. Open a card to read it."><h2>6 · Theoretical Foundations &amp; Key Findings</h2>
+<details><summary>1. Why are these findings foundational for inferential statistics?</summary><div class="db">
+<p><b>Unbiasedness:</b> \(\mathbb E[\bar X]=\mu\) and \(\mathbb E[S^2]=\sigma^2\), so on average the estimators hit the target.</p>
+<p><b>LLN:</b> by Chebyshev, \(P(|\bar X_n-\mu|\ge\varepsilon)\le\dfrac{\sigma^2}{n\varepsilon^2}\to0\): \(\bar X_n\to\mu\) in probability. The same holds for \(S_n^2\to\sigma^2\).</p>
+<p><b>CLT:</b> \(\sqrt n(\bar X_n-\mu)/\sigma\xrightarrow{d}\mathcal N(0,1)\) for any law with finite variance, so the sampling distribution is approximately normal even when the data are not.</p>
+<p><b>Confidence intervals:</b> because \(S\to\sigma\), Slutsky’s theorem gives \(\bar X\pm z_{1-\alpha/2}\,S/\sqrt n\) as an asymptotic \((1-\alpha)\) interval for \(\mu\). Tests and intervals all rest on these three facts.</p></div></details>
+<details><summary>2. Why is S² an unbiased estimator of σ²? (Bessel’s correction)</summary><div class="db">
+<p>Decompose \(\sum_i(X_i-\mu)^2=\sum_i(X_i-\bar X)^2+n(\bar X-\mu)^2\). Taking expectations: \(n\sigma^2=\mathbb E[M_2]+n\cdot\frac{\sigma^2}{n}\), hence \(\mathbb E[M_2]=(n-1)\sigma^2\).</p>
+<p>The sample mean is fitted to the same data, so deviations from \(\bar X\) are systematically smaller than deviations from \(\mu\). Dividing by \(n\) would underestimate \(\sigma^2\) by the factor \(\frac{n-1}{n}\). Equivalently, the residuals satisfy one linear constraint \(\sum_i(X_i-\bar X)=0\), so only \(n-1\) degrees of freedom are left: divide by \(n-1\).</p></div></details>
+<details><summary>3. How does n affect the standard error of X̄ and of S²?</summary><div class="db">
+<p>\(\mathrm{SE}(\bar X)=\sigma/\sqrt n\): to halve the error, quadruple n.</p>
+<p>\(\operatorname{Var}(S^2)=\frac1n\bigl(\mu_4-\frac{n-3}{n-1}\sigma^4\bigr)\), so \(\mathrm{SE}(S^2)\approx\sigma^2\sqrt{\frac{2}{n-1}}\) in the Gaussian case. Both errors shrink like \(1/\sqrt n\), so both estimators are consistent. Estimating \(\sigma^2\) is harder than estimating \(\mu\) and depends on the fourth moment: heavy-tailed or zero-inflated threat scores need more data.</p></div></details>
+<details><summary>4. Why use Welford instead of the naive formula?</summary><div class="db">
+<p>The naive formula subtracts two nearly equal large numbers when the mean is large compared with the spread (catastrophic cancellation), and can return zero or negative variance. Welford updates deviations from the running mean, so no huge numbers are subtracted. It also works in one pass on a stream, with constant memory.</p></div></details></section>
+</main>
+<footer>Valentina R. D'Souza - 2346409 — Statistics</footer>
+<aside id="side"><h3>Subtitles</h3><div id="cap"></div><div id="live"></div><ol id="toc"></ol><button id="cl">Close</button></aside>
+<button id="tg">Subtitles</button>
+
+<script>
+const $=id=>document.getElementById(id);
+const f2=v=>String(+(+v).toFixed(2));
+const f3=v=>{if(!isFinite(v))return '—';const a=Math.abs(v);return a===0?'0':a>=1000?v.toFixed(0):String(+v.toPrecision(3))};
+const M=s=>'\\('+s.replace(/@/g,'\\')+'\\)';
+let mjq=Promise.resolve();const mj=(...e)=>{if(window.MathJax&&MathJax.typesetPromise)mjq=mjq.then(()=>MathJax.typesetPromise(e)).catch(()=>{})};
+const rng=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+// ---- side window
+const secs=[...document.querySelectorAll('section')];
+$('toc').innerHTML=secs.map(s=>`<li><a href="#${s.id}" data-id="${s.id}">${s.dataset.t}</a></li>`).join('');
+function setCap(s){secs.forEach(x=>x.classList.toggle('on',x===s));document.querySelectorAll('#toc a').forEach(a=>a.classList.toggle('on',a.dataset.id===s.id));$('cap').innerHTML=`<b>${s.dataset.t}</b>${s.dataset.c}`}
+const io=new IntersectionObserver(e=>e.forEach(x=>x.isIntersecting&&setCap(x.target)),{rootMargin:'-35% 0px -55% 0px'});
+secs.forEach(s=>io.observe(s));setCap(secs[0]);
+$('tg').onclick=()=>$('side').classList.toggle('open');$('cl').onclick=()=>$('side').classList.remove('open');
+document.querySelectorAll('#toc a').forEach(a=>a.onclick=()=>$('side').classList.remove('open'));
+// ---- charts setup
+const HAS=typeof Chart!=='undefined';
+if(HAS){Chart.defaults.color='#a9a3d9';Chart.defaults.borderColor='rgba(255,255,255,.08)';Chart.defaults.font.family='system-ui,sans-serif'}
+const vline={id:'vline',afterDatasetsDraw(c){if(c.$vl==null)return;const x=c.scales.x.getPixelForValue(c.$vl),a=c.chartArea,g=c.ctx;g.save();g.strokeStyle='#ffc66b';g.setLineDash([6,4]);g.lineWidth=2;g.beginPath();g.moveTo(x,a.top);g.lineTo(x,a.bottom);g.stroke();g.restore()}};
+const mk=(id,cfg)=>HAS?new Chart($(id),cfg):null;
+const lin=(t,lg)=>({type:lg?'logarithmic':'linear',title:{display:!!t,text:t}});
+const base={responsive:true,maintainAspectRatio:false,animation:false,plugins:{legend:{labels:{boxWidth:12}}}};
+let cs,c0,c1,c2,c3,c4,c5;
+if(HAS){
+ cs=mk('cs',{type:'line',data:{labels:[],datasets:[]},options:{...base,scales:{x:{title:{display:true,text:'offset exponent e'}},y:{type:'logarithmic',min:1e-17,max:1e4,title:{display:true,text:'relative error of the variance'}}}}});
+ c0=mk('c0',{type:'bar',data:{labels:[],datasets:[]},options:{...base,plugins:{legend:{display:false}},scales:{x:{title:{display:true,text:'score'}},y:{title:{display:true,text:'probability'}}}}});
+ c1=mk('c1',{type:'line',data:{datasets:[]},options:{...base,parsing:false,elements:{point:{radius:0}},scales:{x:{type:'linear',title:{display:true,text:'k (attempts so far)'}},y:{min:0,max:10,title:{display:true,text:'sample mean'}}}}});
+ const hopt=t=>({...base,scales:{x:{title:{display:true,text:t},ticks:{maxTicksLimit:10,maxRotation:0,autoSkip:true}},y:{title:{display:true,text:'density'}}}});
+ c2=mk('c2',{type:'bar',data:{labels:[],datasets:[]},options:hopt('sample mean'),plugins:[vline]});
+ c3=mk('c3',{type:'bar',data:{labels:[],datasets:[]},options:hopt('sample variance S²'),plugins:[vline]});
+ const lopt=t=>({...base,parsing:false,scales:{x:{type:'logarithmic',title:{display:true,text:'k (sample size)'}},y:{type:'logarithmic',title:{display:true,text:t}}}});
+ c4=mk('c4',{type:'line',data:{datasets:[]},options:lopt('Var of sample means')});
+ c5=mk('c5',{type:'line',data:{datasets:[]},options:lopt('Var of sample variances')});
+}
+// ---- 2 · stability sandbox
+function runStab(off,d){const N=d.length;let s=0,s2=0,count=0,mean=0,M2=0;
+ for(const di of d){const x=off+di;s+=x;s2+=x*x;
+  count+=1;let delta=x-mean;mean+=delta/count;let delta2=x-mean;M2+=delta*delta2}
+ const md=d.reduce((a,b)=>a+b,0)/N;
+ return{naive:(s2-s*s/N)/(N-1),wel:M2/(N-1),ex:d.reduce((a,b)=>a+(b-md)**2,0)/(N-1)}}
+function stab(){const e=+$('so').value,N=+$('sn').value,seq=$('sd').value==='seq',r=rng(12345+N);
+ $('sov').textContent=e;$('snv').textContent=N;
+ const d=Array.from({length:N},(_,i)=>seq?i+1:Math.floor(r()*10)),R=runStab(Math.pow(10,e),d);
+ const rel=v=>Math.abs(v-R.ex)/R.ex,verdict=v=>v<=0?'<span class="bad">zero or negative variance</span>':rel(v)>1e-6?'<span class="bad">inaccurate</span>':'<span class="ok">accurate</span>';
+ $('stb').innerHTML='<tr><th>Method</th><th>Variance</th><th>Relative error</th><th>Verdict</th></tr>'
+  +`<tr><td>Naive one-pass</td><td>${R.naive.toPrecision(8)}</td><td>${rel(R.naive).toExponential(2)}</td><td>${verdict(R.naive)}</td></tr>`
+  +`<tr><td>Welford</td><td>${R.wel.toPrecision(8)}</td><td>${rel(R.wel).toExponential(2)}</td><td>${verdict(R.wel)}</td></tr>`
+  +`<tr><td>Exact (two-pass on the small d<sub>i</sub>)</td><td>${R.ex.toPrecision(8)}</td><td>0</td><td class="mu">reference</td></tr>`;
+ if(cs){const ex=[...Array(16).keys()],fl=v=>Math.max(1e-17,v),E=ex.map(k=>runStab(Math.pow(10,k),d));
+  cs.data.labels=ex.map(k=>'10^'+k);
+  cs.data.datasets=[{label:'naive formula',data:E.map(o=>fl(Math.abs(o.naive-o.ex)/o.ex)),borderColor:'#ff7aa8',backgroundColor:'#ff7aa8',pointRadius:3},{label:'Welford',data:E.map(o=>fl(Math.abs(o.wel-o.ex)/o.ex)),borderColor:'#5cf2c0',backgroundColor:'#5cf2c0',pointRadius:3}];
+  cs.update('none')}}
+['so','sn','sd'].forEach(i=>$(i).oninput=stab);
+// ---- 3 · distributions
+function disc(vals,pr){const mu=vals.reduce((s,v,i)=>s+v*pr[i],0),s2=vals.reduce((s,v,i)=>s+(v-mu)**2*pr[i],0),m4=vals.reduce((s,v,i)=>s+(v-mu)**4*pr[i],0);let c=0;const cdf=pr.map(q=>c+=q);
+ return{mu,s2,m4,sample:r=>{const u=r();for(let i=0;i<cdf.length;i++)if(u<cdf[i])return vals[i];return vals[vals.length-1]}}}
+function dist(){const t=$('dt').value;let d;
+ if(t==='bin'){const p=+$('pp').value,C=[1,10,45,120,210,252,210,120,45,10,1];d=disc([...Array(11).keys()],C.map((c,x)=>c*p**x*(1-p)**(10-x)));d.name='Binomial B(10, '+p.toFixed(2)+')';
+  d.html=`<b>Binomial</b> ${M('X@sim B(10,p)')}, ${M('p='+p.toFixed(2))}: ${M('@mu=10p='+f3(d.mu))}, ${M('@sigma^2=10p(1-p)='+f3(d.s2))}.`}
+ else if(t==='cus'){d=disc([1,4,7,10],[.45,.30,.18,.07]);d.name='Custom threat scale';
+  d.html=`<b>Custom discrete threat scale</b> (asymmetric): Recon = 1 with prob. 0.45, Probe = 4 with 0.30, Exploit = 7 with 0.18, Root = 10 with 0.07.<br>${M('@mu=@sum x_ip_i='+f3(d.mu))}, ${M('@sigma^2=@sum (x_i-@mu)^2p_i='+f3(d.s2))}.`}
+ else{const z=+$('pz').value,q=1-z,mu=q*4,s2=q*23.2-mu*mu;let a=0;const N=20000;for(let i=0;i<N;i++){const u=(i+.5)/N;a+=(1+9*u*u-mu)**4}
+  d={mu,s2,m4:z*mu**4+q*a/N,sample:r=>{if(r()<z)return 0;const u=r();return 1+9*u*u}};d.name='Zero-inflated mixture';
+  d.html=`<b>Zero-inflated cyber mixture:</b> ${M('X=0')} (blocked by the firewall) with prob. ${z.toFixed(2)}; otherwise ${M('X=1+9U^2')}, ${M('U@sim@mathrm{Unif}(0,1)')}, a right-skewed exploit score in [1, 10] with mean 4 and variance 7.2.<br>${M('@mu=(1-@pi_0)\\cdot4='+f3(mu))}, ${M('@sigma^2=(1-@pi_0)\\cdot23.2-@mu^2='+f3(s2))}.`}
+ return d}
+function showDist(){const P=dist(),t=$('dt').value;$('pw').style.display=t==='bin'?'':'none';$('zw').style.display=t==='zi'?'':'none';
+ $('ppv').textContent=(+$('pp').value).toFixed(2);$('pzv').textContent=(+$('pz').value).toFixed(2);$('msv').textContent=$('ms').value;$('nsv').textContent=$('ns').value;
+ $('dinfo').innerHTML=P.html;mj($('dinfo'));
+ if(c0){const r=rng(777),c=Array(11).fill(0),N=20000;for(let i=0;i<N;i++)c[Math.min(10,Math.floor(P.sample(r)))]++;
+  c0.data.labels=c.map((_,i)=>i);c0.data.datasets=[{data:c.map(q=>q/N),backgroundColor:'#a56bff'}];c0.update('none')}
+ return P}
+// ---- simulation (Welford online, per attacker)
+let S=null,anim=null;
+function simulate(){const P=dist(),m=+$('ms').value,n=+$('ns').value,r=rng((Math.random()*2147483647)|0),T=Math.min(8,m);
+ const Mm=new Float32Array(m*n),Vv=new Float32Array(m*n),sm=new Float64Array(n+1),sm2=new Float64Array(n+1),sv=new Float64Array(n+1),sv2=new Float64Array(n+1),tr=[];
+ for(let a=0;a<m;a++){let count=0,mean=0,M2=0;const t=a<T?new Float64Array(n+1):null;
+  for(let k=1;k<=n;k++){const x=P.sample(r);
+   count+=1;let delta=x-mean;mean+=delta/count;let delta2=x-mean;M2+=delta*delta2;
+   const s2=count>1?M2/(count-1):0;
+   Mm[a*n+k-1]=mean;Vv[a*n+k-1]=s2;sm[k]+=mean;sm2[k]+=mean*mean;sv[k]+=s2;sv2[k]+=s2*s2;if(t)t[k]=mean}
+  if(t)tr.push(t)}
+ const L=[...new Set(Array.from({length:50},(_,i)=>Math.round(Math.pow(n/2,i/49)*2)).filter(k=>k>=2&&k<=n).concat([n]))].sort((a,b)=>a-b);
+ S={P,m,n,Mm,Vv,sm,sm2,sv,sv2,tr,L}}
+const tv=(P,k)=>k<2?NaN:(P.m4-(k-3)/(k-1)*P.s2*P.s2)/k;
+function ks_(k){const{m,sm,sm2,sv,sv2}=S;return{gm:sm[k]/m,vm:(sm2[k]-sm[k]*sm[k]/m)/(m-1),gv:sv[k]/m,vs:(sv2[k]-sv[k]*sv[k]/m)/(m-1)}}
+function histo(v,lo,hi,nb){const w=(hi-lo)/nb,c=Array(nb).fill(0);for(const x of v){let b=Math.floor((x-lo)/w);b=Math.max(0,Math.min(nb-1,b));c[b]++}return{w,c,ctr:c.map((_,i)=>lo+(i+.5)*w)}}
+function render(k){if(!S)return;const{P,m,n,Mm,Vv,tr,L}=S,sg=Math.sqrt(P.s2),mu=P.mu;$('kv').textContent=k;$('ks').value=k;
+ const K=ks_(k),pct=(a,b)=>b?(Math.abs(a-b)/Math.abs(b)*100).toFixed(2)+'%':'—';
+ $('tbr').innerHTML='<tr><th>Quantity at step k = '+k+'</th><th>Theory</th><th>Simulation</th><th>Error</th></tr>'
+  +`<tr><td>Grand mean of the sample means</td><td>μ = ${f3(mu)}</td><td>${f3(K.gm)}</td><td>${pct(K.gm,mu)}</td></tr>`
+  +`<tr><td>Grand mean of the sample variances</td><td>σ² = ${f3(P.s2)}</td><td>${k>1?f3(K.gv):'—'}</td><td>${k>1?pct(K.gv,P.s2):'—'}</td></tr>`
+  +`<tr><td>Variance of the sample means</td><td>σ²/k = ${f3(P.s2/k)}</td><td>${f3(K.vm)}</td><td>${pct(K.vm,P.s2/k)}</td></tr>`
+  +`<tr><td>Variance of the sample variances</td><td>${k>1?f3(tv(P,k)):'—'}</td><td>${k>1?f3(K.vs):'—'}</td><td>${k>1?pct(K.vs,tv(P,k)):'—'}</td></tr>`;
+ $('live').innerHTML=`LIVE · ${P.name}<br>m = ${m} attackers · n = ${n} · k = ${k}`;
+ if(!HAS)return;
+ // chart 1
+ const st=Math.max(1,Math.ceil(k/300)),idx=[];for(let i=1;i<=k;i+=st)idx.push(i);if(idx[idx.length-1]!==k)idx.push(k);
+ c1.options.scales.x.min=1;c1.options.scales.x.max=n;
+ c1.data.datasets=[...tr.map((t,i)=>({label:i?'':'Individual Attackers',data:idx.map(j=>({x:j,y:t[j]})),borderColor:`hsla(${200+i*20},85%,68%,.7)`,borderWidth:1.2,showLine:true})),
+  {label:'Theoretical Mean μ',data:[{x:1,y:mu},{x:n,y:mu}],borderColor:'#5cf2c0',borderWidth:2},
+  {label:'Confidence Band μ ± 2σ/√k',data:idx.map(j=>({x:j,y:mu+2*sg/Math.sqrt(j)})),borderColor:'#ffc66b',borderDash:[6,5],borderWidth:1.5},
+  {label:'',data:idx.map(j=>({x:j,y:mu-2*sg/Math.sqrt(j)})),borderColor:'#ffc66b',borderDash:[6,5],borderWidth:1.5},
+  {label:'Current step k',data:[{x:k,y:0},{x:k,y:10}],borderColor:'#ffffff',borderDash:[2,4],borderWidth:1.5}];
+ c1.options.plugins.legend.labels.filter=l=>!!l.text;c1.update('none');
+ // chart 2
+ const vm=new Float32Array(m),vs=new Float32Array(m);for(let a=0;a<m;a++){vm[a]=Mm[a*n+k-1];vs[a]=Vv[a*n+k-1]}
+ const sd=sg/Math.sqrt(k),lo=mu-4*sd,hi=mu+4*sd,h2=histo(vm,lo,hi,31);
+ c2.data.labels=h2.ctr.map(f2);
+ c2.data.datasets=[{type:'bar',label:'sample means',data:h2.c.map(q=>q/(m*h2.w)),backgroundColor:'rgba(165,107,255,.75)',categoryPercentage:1,barPercentage:.95},
+  {type:'line',label:'N(μ, σ²/k)',data:h2.ctr.map(c=>Math.exp(-.5*((c-mu)/sd)**2)/(sd*Math.sqrt(2*Math.PI))),borderColor:'#5cf2c0',borderWidth:2,pointRadius:0}];
+ c2.$vl=(mu-lo)/h2.w-.5;c2.update('none');
+ // chart 3
+ let hi3=1;if(k>1){const so=Float32Array.from(vs).sort();hi3=Math.max(so[Math.floor(.995*(m-1))]*1.05,P.s2*1.2,1e-6)}
+ const h3=histo(k>1?vs:[],0,hi3,31);
+ c3.data.labels=h3.ctr.map(f2);
+ c3.data.datasets=[{type:'bar',label:'sample variances S²',data:h3.c.map(q=>q/(m*h3.w)),backgroundColor:'rgba(77,163,255,.75)',categoryPercentage:1,barPercentage:.95}];
+ c3.$vl=k>1?P.s2/h3.w-.5:null;c3.update('none');
+ // charts 4, 5
+ const Lk=L.filter(j=>j<=k),pt=(arr,f)=>arr.map(j=>({x:j,y:f(j)})).filter(p=>p.y>0&&isFinite(p.y));
+ c4.data.datasets=[{label:'simulated Var(X̄)',data:pt(Lk,j=>ks_(j).vm),borderColor:'#a56bff',backgroundColor:'#a56bff',pointRadius:3,showLine:false},{label:'theory σ²/k',data:pt(L,j=>P.s2/j),borderColor:'#5cf2c0',borderDash:[6,5],pointRadius:0}];
+ c5.data.datasets=[{label:'simulated Var(S²)',data:pt(Lk,j=>ks_(j).vs),borderColor:'#4da3ff',backgroundColor:'#4da3ff',pointRadius:3,showLine:false},{label:'theory',data:pt(L,j=>tv(P,j)),borderColor:'#ffc66b',borderDash:[6,5],pointRadius:0}];
+ c4.update('none');c5.update('none')}
+function stop(){if(anim){clearInterval(anim);anim=null}}
+function play(){stop();let k=2;const step=Math.max(1,Math.ceil(S.n/120));anim=setInterval(()=>{render(Math.min(k,S.n));if(k>=S.n)stop();k+=step},40)}
+function run(){stop();showDist();simulate();$('ks').min=1;$('ks').max=S.n;$('ks').value=S.n;if($('st').checked)play();else render(S.n)}
+$('run').onclick=run;
+['dt','pp','pz','ms','ns'].forEach(i=>{$(i).oninput=showDist;$(i).onchange=run});
+$('ks').oninput=()=>{stop();render(+$('ks').value)};
+stab();run();
+</script></body></html>
