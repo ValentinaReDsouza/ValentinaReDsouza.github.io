@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Numerical Integration & the Normal CDF</title>
+<style>
+:root{color-scheme:dark;--bg:#0d0a24;--card:#1a1440;--card2:#241b5c;--tx:#ece9ff;--mu:#a9a3d9;--pu:#a56bff;--bl:#4da3ff;--ok:#5cf2c0;--bad:#ff7aa8;--wa:#ffc66b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.6 system-ui,-apple-system,Segoe UI,sans-serif;overflow-x:hidden}
+header{text-align:center;padding:56px 20px 16px}
+h1{font-size:clamp(1.9rem,5vw,3.1rem);margin:0;background:linear-gradient(90deg,var(--pu),var(--bl));-webkit-background-clip:text;background-clip:text;color:transparent}
+header p{color:var(--mu);max-width:900px;margin:12px auto}
+main{max-width:none;width:100%;margin:0;padding:0 clamp(16px,3vw,40px) 40px}
+@media(min-width:1100px){body{padding-right:290px}}
+section{background:linear-gradient(145deg,var(--card),var(--card2));border:1px solid #ffffff22;border-radius:20px;padding:24px;margin:24px 0;scroll-margin-top:16px}
+section.on{border-color:var(--pu);box-shadow:0 0 0 1px var(--pu)}
+h2{margin:0 0 8px;color:#d6c4ff}h3{color:var(--bl);margin:16px 0 6px;font-size:1rem}
+p,li{color:#d8d4f5}code{font-family:ui-monospace,Menlo,monospace;font-size:.85rem;background:#0006;padding:1px 6px;border-radius:6px;color:var(--ok)}
+label{display:block;font-size:.85rem;color:var(--mu);margin:10px 0 4px}
+select{width:100%;background:#0a0720;border:1px solid #6b55c9;color:var(--tx);border-radius:10px;padding:9px 12px;font:inherit}
+input[type=range]{width:100%;accent-color:var(--pu)}
+button{background:linear-gradient(90deg,var(--pu),var(--bl));color:#fff;border:0;padding:10px 18px;border-radius:10px;font:600 .9rem system-ui,sans-serif;cursor:pointer;margin:8px 8px 0 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.box{background:#0a072088;border:1px solid #ffffff14;border-radius:14px;padding:14px;margin-top:12px;overflow-x:auto}
+.box.ok{border-color:#5cf2c066}.box.bad{border-color:#ff7aa866}.box.wa{border-color:#ffc66b66}
+.cv{position:relative;height:300px}
+.eq{background:#0a072088;border:1px solid #ffffff14;border-radius:12px;padding:8px 10px;margin:10px 0;overflow-x:auto;text-align:center}.eq mjx-container{margin:0!important}
+mjx-container{font-size:1.1em}
+.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:12px}
+.kpi div{background:#0a072088;border:1px solid #ffffff14;border-radius:12px;padding:10px 12px}.kpi b{display:block;font:700 1.1rem ui-monospace,monospace;color:var(--ok)}.kpi span{font-size:.72rem;color:var(--mu);text-transform:uppercase}
+table{width:100%;border-collapse:collapse;font-size:.85rem}td,th{padding:7px;border-bottom:1px solid #ffffff18;text-align:left}th{color:var(--bl);font-size:.72rem;text-transform:uppercase}
+.ok{color:var(--ok)}.bad{color:var(--bad)}.mu{color:var(--mu);font-size:.85rem}.wa{color:var(--wa)}
+details{background:#0a072088;border:1px solid #ffffff14;border-radius:14px;margin-top:12px}
+summary{cursor:pointer;padding:14px 16px;font-weight:700;color:#d6c4ff}details[open] summary{border-bottom:1px solid #ffffff14}
+.db{padding:4px 16px 14px}
+#side{position:fixed;top:0;right:0;bottom:0;width:290px;background:#120d33f2;border-left:1px solid var(--pu);padding:calc(18px + env(safe-area-inset-top,0px)) 16px calc(18px + env(safe-area-inset-bottom,0px));z-index:50;overflow-y:auto;backdrop-filter:blur(10px);transition:transform .3s}
+#side h3{margin:0 0 8px;color:var(--ok)}
+#cap{background:#0006;border-radius:12px;padding:12px;min-height:150px;font-size:.9rem;border-left:3px solid var(--ok)}#cap b{display:block;color:var(--pu);margin-bottom:4px}
+#live{margin-top:12px;font:.78rem ui-monospace,monospace;color:var(--wa);background:#0006;border-radius:10px;padding:8px 10px}
+#toc{list-style:none;padding:0;margin:14px 0 0}#toc a{display:block;padding:6px 10px;border-radius:8px;color:var(--mu);text-decoration:none;font-size:.85rem}#toc a.on{background:var(--card2);color:var(--tx)}
+footer{text-align:center;font-size:.62rem;opacity:.4;padding:0 16px calc(28px + env(safe-area-inset-bottom,0px));color:var(--mu);letter-spacing:.03em}
+#tg,#cl{display:none}
+@media(max-width:1099px){#side{transform:translateX(100%)}#side.open{transform:none}
+#tg{display:block;position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:60;border-radius:50px}#cl{display:inline-block;margin-top:12px}}
+</style>
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head><body>
+<header><h1>Riemann vs Lebesgue &amp; the Normal CDF</h1>
+<p>Riemann, Lebesgue and Gaussian Probability: explore domain-based and range-based integration, investigate pathological functions, and compare numerical algorithms for the standard normal cumulative distribution function.</p></header>
+<main>
+
+<section id="th1" data-t="1 · Riemann vs Lebesgue" data-c="Exercise 1, theory. Riemann slices the domain (x axis) into strips f(ξᵢ)Δx. Lebesgue slices the range (y axis) and multiplies each level yⱼ by the measure μ(Eⱼ) of the set where f takes that level. Dirichlet breaks Riemann, but Lebesgue gives 0."><h2>1 · Exercise 1: two ways to slice the area</h2>
+<h3>Riemann: partition the domain</h3>
+<div class="eq">\[\begin{aligned}\int_a^b f\,dx&\approx\sum_{i=1}^{N}f(\xi_i)\,\Delta x,\qquad \Delta x=\frac{b-a}{N}\\[4pt] L(P)&=\sum_i m_i\Delta x\ \le\ \sum_i f(\xi_i)\Delta x\ \le\ U(P)=\sum_i M_i\Delta x\end{aligned}\]</div>
+<p class="mu">\(m_i,M_i\) are the infimum and supremum of \(f\) on the \(i\)-th strip. \(f\) is Riemann integrable iff \(\sup_P L(P)=\inf_P U(P)\).</p>
+<h3>Lebesgue: partition the range</h3>
+<div class="eq">\[\begin{aligned}\int f\,d\mu&=\sup_{0\le s\le f}\int s\,d\mu,\qquad s=\sum_j y_j\,\mathbf 1_{E_j}\\[4pt] \int s\,d\mu&=\sum_j y_j\,\mu(E_j),\qquad E_j=\{x:\ y_j\le f(x)\lt y_{j+1}\}\end{aligned}\]</div>
+<p class="mu">Equivalent “layer cake” form: \(\int f\,d\mu=\int_0^\infty \mu(\{f>t\})\,dt\). What matters is the <i>size</i> of the sets where \(f\) takes each value, not where they sit on the axis.</p>
+<h3>The pathological functions on [0, 1]</h3>
+<p><b>Dirichlet</b> \(\mathbf 1_{\mathbb Q}\): every strip contains rationals and irrationals, so \(m_i=0\), \(M_i=1\): \(L=0\), \(U=1\) for every partition. Not Riemann integrable. Since \(\mathbb Q\) is countable, \(\mu(\mathbb Q\cap[0,1])=0\) and the Lebesgue integral is \(1\cdot0+0\cdot1=0\).</p>
+<p><b>Thomae</b> (\(1/q\) at \(p/q\) in lowest terms, \(0\) at irrationals): continuous at every irrational, discontinuous only on \(\mathbb Q\) (measure 0). By Lebesgue’s criterion it <i>is</i> Riemann integrable, with integral 0 (\(L=0\), \(U_N\to0\)). It is a counterexample to “discontinuous everywhere on a dense set means not integrable”, not to Riemann integrability.</p></section>
+
+<section id="lab" data-t="2 · Integration laboratory" data-c="Pick a function and a partition size N. Left chart: Riemann strips on the x axis. Right chart: the simple function built by slicing the y axis into N levels. The table gives value, error, observed convergence order, time and cost for each approach."><h2>2 · Integration laboratory</h2>
+<div class="grid"><div><label>Function</label><select id="fs">
+<optgroup label="Regular / continuous"><option value="sin">sin(x) on [0, π]</option><option value="sq">x² on [0, 1]</option><option value="abs">|x − 0.5| on [0, 1]</option><option value="sinc">sin(x)/x on [0, π]</option><option value="inv">1/√x on (0, 1]</option></optgroup>
+<optgroup label="Step / piecewise"><option value="st1">1 if x &lt; 0.5, else 3 on [0, 1]</option><option value="st2">1 if x &lt; 0.5, else 0 on [0, 1]</option></optgroup>
+<optgroup label="Pathological"><option value="dir">Dirichlet function on [0, 1]</option><option value="tho">Thomae function on [0, 1]</option></optgroup></select></div>
+<div><label>Partition size N: <b id="Nv">100</b></label><input type="range" id="N" min="10" max="1000" step="10" value="100"><button id="run1">Run calculation</button></div></div>
+<div class="kpi" id="kpi"></div>
+<div class="grid"><div class="box"><b>Riemann: slice the domain (x)</b><div class="cv"><canvas id="cA"></canvas></div></div><div class="box"><b>Lebesgue: slice the range (y)</b><div class="cv"><canvas id="cB"></canvas></div></div></div>
+<p class="mu" id="capAB"></p>
+<div class="box"><table id="tb1"></table></div></section>
+
+<section id="conv" data-t="3 · Convergence & failure" data-c="Error against N for each method (log-log), or for the pathological functions the Darboux bounds. Dirichlet: lower sum 0 and upper sum 1 never meet, so Riemann fails. Thomae: the upper sum shrinks to 0, so Riemann works. Lebesgue gives 0 for both."><h2>3 · Convergence as N grows</h2>
+<div class="box"><div class="cv"><canvas id="cC"></canvas></div></div>
+<p class="mu" id="capC"></p>
+<div class="grid">
+<div class="box bad"><b class="bad">Why Riemann fails on Dirichlet</b><p>Every interval, however small, contains rationals (\(f=1\)) and irrationals (\(f=0\)). Choosing rational tags gives the sum 1, irrational tags give 0. The lower and upper Darboux sums are \(0\) and \(1\) for every \(N\): their gap never closes, so the limit does not exist.</p></div>
+<div class="box ok"><b class="ok">Why Lebesgue handles it</b><p>Only two levels occur: \(y=1\) on \(\mathbb Q\cap[0,1]\) and \(y=0\) on the irrationals. \(\mu(\mathbb Q)=0\) (countable set) and \(\mu(\text{irrationals})=1\), so \(\int f\,d\mu=1\cdot0+0\cdot1=0\). No limit process on partitions is needed.</p></div>
+<div class="box wa"><b class="wa">Thomae: a useful subtlety</b><p>Each level \(1/q\) is taken at finitely many points, so \(\mu(\{f=1/q\})=0\) and the Lebesgue integral is 0. Riemann also succeeds here: \(f\) is discontinuous only on a null set, and the upper sums \(U_N\) decrease to 0.</p></div></div></section>
+
+<section id="th2" data-t="4 · Normal CDF theory" data-c="Exercise 2, theory. The integral of e^(−t²/2) has no elementary primitive (Liouville). The error function erf is the new special function that represents it exactly; floating-point evaluation still needs numerical methods."><h2>4 · Exercise 2: why \(\Phi\) needs numerics</h2>
+<div class="eq">\[\Phi(z)=\int_{-\infty}^{z}\varphi(t)\,dt=\frac12+\int_0^z\varphi(t)\,dt,\qquad \varphi(t)=\frac{e^{-t^2/2}}{\sqrt{2\pi}}\]</div>
+<h3>Non-elementary primitive (Liouville)</h3>
+<p><b>Theorem (Liouville).</b> Let \(f,g\) be rational functions with \(g\) non-constant. Then \(\int f(t)\,e^{g(t)}dt\) is an elementary function if and only if there is a rational function \(R\) with</p>
+<div class="eq">\[R'(t)+g'(t)\,R(t)=f(t)\]</div>
+<p>(elementary = finite combinations of algebraic, exponential and logarithmic functions). Take \(f=1\), \(g=-t^2/2\), so we would need \(R'-tR=1\).</p>
+<p><b>No such \(R\) exists.</b> If \(R\) had a pole of order \(m\ge1\) at some point \(a\), then \(R'\) has a pole of order \(m+1\) while \(tR\) has order at most \(m\); the left side would have a pole, but the right side is 1. So \(R\) is a polynomial. \(R=0\) gives \(0\ne1\); if \(\deg R=d\ge0\), then \(R'-tR\) has degree \(d+1\ge1\), never the constant 1. Hence \(\int e^{-t^2/2}dt\) is not elementary, and neither is \(\Phi\).</p>
+<h3>Special function: erf</h3>
+<div class="eq">\[\operatorname{erf}(x)=\frac{2}{\sqrt\pi}\int_0^x e^{-u^2}du=\frac{2}{\sqrt\pi}\sum_{n=0}^{\infty}\frac{(-1)^n\,x^{2n+1}}{n!\,(2n+1)},\qquad \Phi(z)=\frac12\Bigl[1+\operatorname{erf}\Bigl(\frac{z}{\sqrt2}\Bigr)\Bigr]\]</div>
+<p class="mu">Giving the primitive a name makes \(\Phi\) exact as a formula, but it does not make it computable by finitely many elementary operations: every floating-point value is an approximation (quadrature, series or rational/continued-fraction formulas).</p></section>
+
+<section id="cdf" data-t="5 · CDF sandbox" data-c="Move z and compare four ways to compute Φ(z) with a high-precision reference: trapezoid and Simpson quadrature of the density, the Maclaurin series of erf, and the stable erf relation. The charts show how error falls with panels and terms."><h2>5 · CDF sandbox: four methods against a reference</h2>
+<div class="grid"><div><label>z = <b id="zv">1.96</b></label><input type="range" id="zz" min="-3.5" max="3.5" step="0.01" value="1.96">
+<button id="run2">Run calculation</button></div>
+<div><label>Quadrature panels N: <b id="niv">10</b></label><input type="range" id="ni" min="2" max="200" step="2" value="10">
+<label>Series terms T: <b id="ntv">8</b></label><input type="range" id="nt" min="1" max="40" step="1" value="8"></div></div>
+<div class="kpi" id="kpi2"></div>
+<div class="box"><div class="cv" style="height:240px"><canvas id="cD"></canvas></div></div>
+<p class="mu">Standard normal density; the shaded area up to z is \(\Phi(z)\).</p>
+<div class="box"><table id="tb2"></table></div>
+<p class="mu" id="chk"></p>
+<p class="mu">Reference: Hogg, McKean &amp; Craig, <i>Introduction to Mathematical Statistics</i>, §3.4 (normal distribution), <a href="https://faculty.etsu.edu/gardnerr/4047/notes-Hogg-McKean-Craig/Hogg-McKean-Craig-3-4.pdf" target="_blank" rel="noopener" style="color:var(--bl)">course notes (PDF)</a>.</p>
+<div class="grid"><div class="box"><b>Quadrature error vs panels</b><div class="cv"><canvas id="cE"></canvas></div></div><div class="box"><b>Series error vs terms</b><div class="cv"><canvas id="cF"></canvas></div></div></div>
+<p class="mu">Log scale; 10⁻¹⁷ means exact to machine precision. Simpson converges like \(N^{-4}\), trapezoid like \(N^{-2}\). The Maclaurin series of erf alternates in sign and loses digits to cancellation for large |z|; the positive-term (Kummer) form does not.</p></section>
+
+<section id="qa" data-t="6 · Questions &amp; answers" data-c="Short answers to the most common questions on the topic. Open a card for each question."><h2>6 · Common questions</h2>
+<details><summary>1. What is the fundamental difference between Riemann and Lebesgue integration?</summary><div class="db">
+<p><b>Riemann slices the domain:</b> cut \([a,b]\) into \(N\) strips and sum \(f(\xi_i)\Delta x\). It needs \(f\) to vary little on small intervals, i.e. to be essentially continuous.</p>
+<p><b>Lebesgue slices the range:</b> cut the \(y\)-axis into levels \(y_j\) and sum \(y_j\,\mu(E_j)\), where \(E_j\) is the set of \(x\) at which \(f\) is near \(y_j\). It needs only that these sets be measurable. Image: counting a pile of coins by first sorting them by value (Lebesgue) instead of adding them in the order they lie on the table (Riemann).</p>
+<p>Consequences: more functions are integrable, and limit theorems (monotone and dominated convergence) hold under much weaker conditions.</p></div></details>
+<details><summary>2. Why is the Dirichlet function Riemann non-integrable but Lebesgue integrable?</summary><div class="db">
+<p>Riemann: on every subinterval \(\inf f=0\) and \(\sup f=1\), so \(L(P)=0\) and \(U(P)=1\) for every partition. \(\sup L\ne\inf U\): not integrable.</p>
+<p>Lebesgue: \(f=\mathbf 1_{\mathbb Q}\) is a simple function. \(\mathbb Q\cap[0,1]\) is countable, hence \(\mu=0\) (cover the \(k\)-th rational with an interval of length \(\varepsilon2^{-k}\)). So \(\int f\,d\mu=1\cdot\mu(\mathbb Q)+0\cdot\mu(\mathbb Q^c)=0\).</p></div></details>
+<details><summary>3. What does Liouville’s theorem say, and why does it apply to the normal CDF?</summary><div class="db">
+<p>It characterizes which antiderivatives are elementary: \(\int f e^{g}\) (with \(f,g\) rational) is elementary iff \(R'+g'R=f\) has a rational solution \(R\).</p>
+<p>For \(f=1\), \(g=-t^2/2\) the equation \(R'-tR=1\) has no rational solution (a pole of order \(m\) in \(R\) gives a pole of order \(m+1\) in \(R'\) that cannot cancel; a polynomial of degree \(d\) gives degree \(d+1\ge1\), never the constant 1). So \(\int e^{-t^2/2}dt\), and therefore \(\Phi\), is not elementary. We introduce \(\operatorname{erf}\) as a new special function and compute it numerically.</p></div></details>
+<details><summary>4. How do Simpson’s rule and Taylor series trade accuracy for cost?</summary><div class="db">
+<p><b>Simpson:</b> \(N+1\) density evaluations, error \(O(h^4)\) with \(h=z/N\); robust, simple, but accuracy is limited by the panel count, and it needs smoothness (the fourth derivative).</p>
+<p><b>Taylor/Maclaurin of erf:</b> converges for every \(x\) (entire function), error drops factorially once \(n>x^2\); cheap per term. But the alternating signs cause cancellation for large \(|z|\) (terms of size \(e^{x^2}\) must sum to a result below 1), and many terms are needed. The positive-term form or a continued fraction avoids this.</p>
+<p>Rule of thumb: series near the center, continued fractions in the tails, quadrature when only the density is available.</p></div></details>
+<details><summary>5. Extra: is Thomae’s function a counterexample to Riemann integration?</summary><div class="db">
+<p>No. Thomae’s function is discontinuous exactly on the rationals, a null set. Lebesgue’s criterion says a bounded function is Riemann integrable iff its discontinuity set has measure zero. So it is Riemann integrable with integral 0, which agrees with the Lebesgue value. Only the Dirichlet function (discontinuous everywhere) fails.</p></div></details></section>
+</main>
+<footer>Valentina R. D'Souza - 2346409 — Statistics</footer>
+<aside id="side"><h3>Notes</h3><div id="cap"></div><div id="live"></div><ol id="toc"></ol><button id="cl">Close</button></aside>
+<button id="tg">Notes</button>
+
+<script>
+const $=id=>document.getElementById(id);
+const f3=v=>{if(!isFinite(v))return '—';const a=Math.abs(v);return a===0?'0':a>=1000?v.toFixed(0):String(+v.toPrecision(3))};
+const ex=v=>!isFinite(v)?'—':v===0?'0':Math.abs(v)<1e-3||Math.abs(v)>=1e4?v.toExponential(2):String(+v.toPrecision(6));
+let mjq=Promise.resolve();const mj=(...e)=>{if(window.MathJax&&MathJax.typesetPromise)mjq=mjq.then(()=>MathJax.typesetPromise(e)).catch(()=>{})};
+// ---- side window
+const secs=[...document.querySelectorAll('section')];
+$('toc').innerHTML=secs.map(s=>`<li><a href="#${s.id}" data-id="${s.id}">${s.dataset.t}</a></li>`).join('');
+function setCap(s){secs.forEach(x=>x.classList.toggle('on',x===s));document.querySelectorAll('#toc a').forEach(a=>a.classList.toggle('on',a.dataset.id===s.id));$('cap').innerHTML=`<b>${s.dataset.t}</b>${s.dataset.c}`}
+const io=new IntersectionObserver(e=>e.forEach(x=>x.isIntersecting&&setCap(x.target)),{rootMargin:'-35% 0px -55% 0px'});
+secs.forEach(s=>io.observe(s));setCap(secs[0]);
+$('tg').onclick=()=>$('side').classList.toggle('open');$('cl').onclick=()=>$('side').classList.remove('open');
+document.querySelectorAll('#toc a').forEach(a=>a.onclick=()=>$('side').classList.remove('open'));
+// ================= NUM START =================
+const FN={
+ sin:{name:'sin(x) on [0, π]',a:0,b:Math.PI,f:x=>Math.sin(x),ex:2,ym:1.15},
+ sq:{name:'x² on [0, 1]',a:0,b:1,f:x=>x*x,ex:1/3,ym:1.1},
+ abs:{name:'|x − 0.5| on [0, 1]',a:0,b:1,f:x=>Math.abs(x-.5),ex:.25,ym:.6},
+ sinc:{name:'sin(x)/x on [0, π]',a:0,b:Math.PI,f:x=>x===0?1:Math.sin(x)/x,ex:1.8519370519824662,ym:1.15},
+ inv:{name:'1/√x on (0, 1]',a:0,b:1,f:x=>1/Math.sqrt(x),ex:2,ym:6,geo:true},
+ st1:{name:'1 if x < 0.5 else 3',a:0,b:1,f:x=>x<.5?1:3,ex:2,ym:3.4},
+ st2:{name:'1 if x < 0.5 else 0',a:0,b:1,f:x=>x<.5?1:0,ex:.5,ym:1.2},
+ dir:{name:'Dirichlet',a:0,b:1,path:'D',ex:0,ym:1.15},
+ tho:{name:'Thomae',a:0,b:1,path:'T',ex:0,ym:1.1}};
+const GM=200000,GC={};
+function grid(key){if(GC[key])return GC[key];const F=FN[key],v=new Float64Array(GM),w=(F.b-F.a)/GM;let mn=Infinity,mx=-Infinity;
+ for(let i=0;i<GM;i++){const y=F.f(F.a+(i+.5)*w);v[i]=y;if(y<mn)mn=y;if(y>mx)mx=y}
+ return GC[key]={v,min:mn,max:mx,w}}
+const gcd=(a,b)=>{while(b){[a,b]=[b,a%b]}return a};
+function riemL(F,N){const h=(F.b-F.a)/N,r=!isFinite(F.f(F.a));let s=0;for(let i=0;i<N;i++)s+=F.f(F.a+(i+(r?1:0))*h);return s*h}
+function trap(F,N){if(!isFinite(F.f(F.a)))return NaN;const h=(F.b-F.a)/N;let s=(F.f(F.a)+F.f(F.b))/2;for(let i=1;i<N;i++)s+=F.f(F.a+i*h);return s*h}
+function levIdx(g,geo,N,v){let j;if(geo)j=Math.floor(Math.log(v/g.min)/Math.log(Math.pow(g.max/g.min,1/N)));else j=Math.floor((v-g.min)/((g.max-g.min)/N));return j<0?0:j>N-1?N-1:j}
+function levVal(g,geo,N,j){return geo?g.min*Math.pow(g.max/g.min,j/N):g.min+j*(g.max-g.min)/N}
+function lebSum(key,N){const F=FN[key],g=grid(key),mu=new Float64Array(N);
+ for(let i=0;i<GM;i++)mu[levIdx(g,F.geo,N,g.v[i])]+=g.w;
+ let s=0;for(let j=0;j<N;j++)s+=levVal(g,F.geo,N,j)*mu[j];return s}
+const thoL=N=>{let s=0;for(let k=0;k<N;k++)s+=gcd(k,N)/N;return s/N};
+function thoU(N){let s=0;for(let k=0;k<N;k++){let q=1;for(;q<=N;q++){const lo=Math.floor((k*q+N-1)/N),hi=Math.floor(((k+1)*q)/N);if(lo<=hi)break}s+=1/q}return s/N}
+let SINK=0;
+function tmr(fn,R){const t0=performance.now();let a=0;for(let i=0;i<R;i++)a+=fn()||0;SINK+=a;return (performance.now()-t0)/R*1000}
+// ---- Normal CDF
+const SQ2=Math.sqrt(2),SQPI=Math.sqrt(Math.PI),phi=t=>Math.exp(-t*t/2)/Math.sqrt(2*Math.PI);
+function refPhi(z,T){T=T||400;let t=z,s=z;for(let n=1;n<=T;n++){t*=z*z/(2*n+1);s+=t}return .5+phi(z)*s}
+function trapPhi(z,N){const h=z/N;let s=(phi(0)+phi(z))/2;for(let i=1;i<N;i++)s+=phi(i*h);return .5+s*h}
+function simpPhi(z,N){const h=z/N;let s=phi(0)+phi(z);for(let i=1;i<N;i++)s+=(i%2?4:2)*phi(i*h);return .5+s*h/3}
+function erfM(x,T){let t=x,s=x;for(let n=1;n<T;n++){t*=-x*x/n;s+=t/(2*n+1)}return 2/SQPI*s}
+function erfS(x){const a=Math.abs(x);let r;
+ if(a<1.5){let t=a,s=a;for(let n=1;n<200;n++){t*=2*a*a/(2*n+1);s+=t;if(t<1e-18*s)break}r=2/SQPI*Math.exp(-a*a)*s}
+ else{let f=a;for(let k=120;k>=1;k--)f=a+(k/2)/f;r=1-Math.exp(-a*a)/(SQPI*f)}
+ return x<0?-r:r}
+const PhiE=z=>.5*(1+erfS(z/SQ2)),PhiM=(z,T)=>.5*(1+erfM(z/SQ2,T));
+// ================= NUM END =================
+// ---- charts
+const HAS=typeof Chart!=='undefined';
+if(HAS){Chart.defaults.color='#a9a3d9';Chart.defaults.borderColor='rgba(255,255,255,.08)';Chart.defaults.font.family='system-ui,sans-serif'}
+const shp={id:'shp',beforeDatasetsDraw(c){const S=c.$s;if(!S)return;const g=c.ctx,x=c.scales.x,y=c.scales.y,a=c.chartArea;g.save();g.beginPath();g.rect(a.left,a.top,a.width,a.height);g.clip();
+ (S.rects||[]).forEach(r=>{g.fillStyle=r.c;const p0=x.getPixelForValue(r.x0),p1=x.getPixelForValue(r.x1),q0=y.getPixelForValue(r.y0),q1=y.getPixelForValue(r.y1);g.fillRect(p0,q1,Math.max(1,p1-p0),q0-q1)});
+ (S.lines||[]).forEach(l=>{g.strokeStyle=l.c;g.lineWidth=l.w||1;g.setLineDash(l.d||[]);const p=y.getPixelForValue(l.y);g.beginPath();g.moveTo(a.left,p);g.lineTo(a.right,p);g.stroke()});
+ g.setLineDash([]);g.fillStyle='#ece9ff';g.font='12px system-ui';(S.text||[]).forEach(t=>g.fillText(t.t,x.getPixelForValue(t.x),y.getPixelForValue(t.y)));g.restore()}};
+const mk=(id,cfg)=>HAS?new Chart($(id),cfg):null;
+const base={responsive:true,maintainAspectRatio:false,animation:false,parsing:false,plugins:{legend:{labels:{boxWidth:12}}}};
+const xy=(xt,yt)=>({...base,elements:{point:{radius:0}},scales:{x:{type:'linear',title:{display:true,text:xt}},y:{type:'linear',title:{display:true,text:yt}}}});
+let cA,cB,cC,cD,cE,cF;
+if(HAS){cA=mk('cA',{type:'line',data:{datasets:[]},options:xy('x','f(x)'),plugins:[shp]});cB=mk('cB',{type:'line',data:{datasets:[]},options:xy('x','f(x)'),plugins:[shp]});
+ cD=mk('cD',{type:'line',data:{datasets:[]},options:{...xy('t','density φ(t)'),scales:{x:{type:'linear',min:-4,max:4,title:{display:true,text:'t'}},y:{type:'linear',min:0,title:{display:true,text:'φ(t)'}}}}});
+ const lg=(xt,yt)=>({...base,elements:{point:{radius:2.5}},scales:{x:{type:'logarithmic',title:{display:true,text:xt}},y:{type:'logarithmic',min:1e-17,max:10,title:{display:true,text:yt}}}});
+ cE=mk('cE',{type:'line',data:{datasets:[]},options:lg('panels N','absolute error')});
+ cF=mk('cF',{type:'line',data:{datasets:[]},options:{...lg('terms T','absolute error'),scales:{x:{type:'linear',title:{display:true,text:'terms T'}},y:{type:'logarithmic',min:1e-17,max:10,title:{display:true,text:'absolute error'}}}}})}
+// ---- exercise 1
+let key='sin',lastN=100;
+const curve=(F,n)=>{const p=[],a=F.a+(F.f(F.a)===Infinity?.0025:0);for(let i=0;i<=n;i++){const x=a+(F.b-a)*i/n;p.push({x,y:Math.min(F.f(x),F.ym*2)})}return p};
+const popc=()=>{const p=[];for(let q=1;q<=30;q++)for(let r=0;r<=q;r++)if(gcd(r,q)===1)p.push({x:r/q,y:1/q});return p};
+function setAx(c,F){c.options.scales.x.min=F.a;c.options.scales.x.max=F.b;c.options.scales.y.min=-0.03*F.ym;c.options.scales.y.max=F.ym}
+function drawAB(){if(!HAS)return;const F=FN[key],N=+$('N').value,g=F.path?null:grid(key);setAx(cA,F);setAx(cB,F);
+ const A={rects:[],lines:[],text:[]},B={rects:[],lines:[],text:[]},h=(F.b-F.a)/N;let dA,dB;
+ const pt=(l,d,c,r)=>({label:l,data:d,borderColor:c,backgroundColor:c,showLine:false,pointRadius:r});
+ if(F.path==='D'){const rp=[];const st=Math.max(1,Math.ceil(N/150));for(let k=0;k<=N;k+=st)rp.push({x:k/N,y:1});
+  A.rects.push({x0:0,x1:1,y0:0,y1:1,c:'rgba(165,107,255,.2)'});A.text.push({t:'rational tags: Σ f(ξ)Δx = 1',x:.05,y:.55},{t:'irrational tags: Σ f(ξ)Δx = 0',x:.05,y:.08});
+  dA=[pt('rational points: f = 1',rp,'#a56bff',3),{label:'irrational points: f = 0',data:[{x:0,y:0},{x:1,y:0}],borderColor:'#5cf2c0',borderWidth:2}];
+  B.lines.push({y:0,c:'#4da3ff',w:3},{y:1,c:'#ffc66b',w:1.5,d:[6,4]});B.text.push({t:'level y = 1: ℚ∩[0,1], μ = 0',x:.05,y:.93},{t:'level y = 0: irrationals, μ = 1',x:.05,y:.1},{t:'∫ f dμ = 1·0 + 0·1 = 0',x:.05,y:.55});
+  dB=[pt('rationals (measure 0)',rp,'#ffc66b',2)]}
+ else if(F.path==='T'){for(let k=0;k<N;k++)A.rects.push({x0:k/N,x1:(k+1)/N,y0:0,y1:gcd(k,N)/N,c:'rgba(165,107,255,.55)'});
+  A.text.push({t:'strips of height f(k/N) = gcd(k,N)/N',x:.35,y:.9});dA=[pt('(p/q, 1/q)',popc(),'#a56bff',3)];
+  for(let q=1;q<=8;q++){B.lines.push({y:1/q,c:'#ffc66b55',w:1,d:[4,4]});B.text.push({t:'μ{f=1/'+q+'} = 0',x:.66,y:1/q+.012})}
+  B.lines.push({y:0,c:'#4da3ff',w:3});B.text.push({t:'μ{f=0} = 1  →  ∫ f dμ = 0',x:.05,y:.06});dB=[pt('(p/q, 1/q)',popc(),'#ffc66b',3)]}
+ else{const tagR=!isFinite(F.f(F.a));for(let i=0;i<N;i++){const x0=F.a+i*h;A.rects.push({x0,x1:x0+h,y0:0,y1:Math.min(F.f(x0+(tagR?h:0)),F.ym*2),c:'rgba(165,107,255,.4)'})}
+  A.text.push({t:'Σ f(ξᵢ)Δx = '+ex(tagR?riemL(F,N):riemL(F,N)),x:F.a+.03*(F.b-F.a),y:F.ym*.92});
+  const C=600,w=(F.b-F.a)/C,stp=Math.max(1,Math.ceil(N/60));
+  for(let i=0;i<C;i++){const x0=F.a+i*w,v=F.f(x0+w/2),j=levIdx(g,F.geo,N,v);B.rects.push({x0,x1:x0+w,y0:0,y1:Math.min(levVal(g,F.geo,N,j),F.ym*2),c:'rgba(77,163,255,.45)'})}
+  for(let j=0;j<N;j+=stp)B.lines.push({y:levVal(g,F.geo,N,j),c:'rgba(255,198,107,.35)',w:1,d:[3,3]});
+  B.text.push({t:'Σ yⱼ μ(Eⱼ) = '+ex(lebSum(key,N)),x:F.a+.03*(F.b-F.a),y:F.ym*.92});
+  const cv=curve(F,400);dA=[{label:'f(x)',data:cv,borderColor:'#5cf2c0',borderWidth:2}];dB=[{label:'f(x)',data:cv,borderColor:'#5cf2c0',borderWidth:2}]}
+ cA.$s=A;cB.$s=B;cA.data.datasets=dA;cB.data.datasets=dB;cA.update('none');cB.update('none');
+ $('capAB').textContent=F.path==='D'?'Left: with rational tags every strip has height 1, with irrational tags height 0, so the Riemann sums disagree. Right: only two levels exist, and the level y = 1 has measure 0.':F.path==='T'?'Left: strips at the nodes k/N have tiny heights gcd(k,N)/N. Right: each level 1/q is taken at finitely many points (measure 0); the level 0 carries all the measure.':'Left: N vertical strips of height f(ξᵢ). Right: N horizontal levels yⱼ; the blue region is the simple function s ≤ f, whose integral is Σ yⱼ μ(Eⱼ). Dashed yellow lines are the levels.'}
+function row(m,v,e,p,t,c){return `<tr><td>${m}</td><td>${ex(v)}</td><td>${e===null?'—':ex(e)}</td><td>${p}</td><td>${t}</td><td>${c}</td></tr>`}
+function order(fn,N,exact){const Nh=Math.max(5,Math.floor(N/2)),e=Math.abs(fn(N)-exact),eh=Math.abs(fn(Nh)-exact);return(e>1e-14&&eh>1e-14&&Nh<N)?(Math.log(eh/e)/Math.log(N/Nh)).toFixed(2):'—'}
+function table(){const F=FN[key],N=+$('N').value,h='<tr><th>Approach</th><th>Value</th><th>Absolute error</th><th>Order p</th><th>Time (µs)</th><th>Cost</th></tr>';let r='';
+ if(F.path==='D'){const t0=performance.now();r=row('Riemann sum, rational tags',1,1,'no limit','—','N evaluations')+row('Riemann sum, irrational tags',0,0,'no limit','—','N evaluations')+row('Lower Darboux sum L',0,0,'—','—','—')+row('Upper Darboux sum U',1,1,'U − L = 1 ∀N','—','—')+row('Lebesgue (exact measures)',0,0,'exact','—','2 levels, μ(ℚ)=0')}
+ else if(F.path==='T'){const S=thoL(N),U=thoU(N);r=row('Riemann left sum S<sub>N</sub>',S,S,order(thoL,N,0),f3(tmr(()=>thoL(N),20)),N+' evaluations')+row('Upper Darboux sum U<sub>N</sub>',U,U,order(thoU,N,0),f3(tmr(()=>thoU(N),1)),'~N·q<sub>min</sub> tests')+row('Lower Darboux sum L<sub>N</sub>',0,0,'—','—','—')+row('Lebesgue (exact measures)',0,0,'exact','—','μ{f=1/q} = 0 ∀q')}
+ else{const L=riemL(F,N),T=trap(F,N),Lb=lebSum(key,N),R=Math.max(1,Math.ceil(2e5/N));
+  r=row('Riemann left sum',L,Math.abs(L-F.ex),order(n=>riemL(F,n),N,F.ex),f3(tmr(()=>riemL(F,N),R)),N+' evaluations'+(isFinite(F.f(F.a))?'':' (right tags: f(0)=∞)'))
+   +(isNaN(T)?row('Trapezoid rule',NaN,null,'n/a','—','f(0) = ∞'):row('Trapezoid rule',T,Math.abs(T-F.ex),order(n=>trap(F,n),N,F.ex),f3(tmr(()=>trap(F,N),R)),(N+1)+' evaluations'))
+   +row('Lebesgue simple-function sum',Lb,Math.abs(Lb-F.ex),order(n=>lebSum(key,n),N,F.ex),f3(tmr(()=>lebSum(key,N),1)),N+' levels + μ(Eⱼ) from '+GM.toLocaleString('en-US')+'-point grid')}
+ $('tb1').innerHTML=h+r;
+ $('kpi').innerHTML=`<div><span>Function</span><b style="font-size:.85rem">${F.name}</b></div><div><span>Exact integral</span><b>${ex(F.ex)}</b></div><div><span>N</span><b>${N}</b></div>`;
+ $('live').innerHTML=`LIVE · ${F.name}<br>N = ${N} · z = ${$('zz').value}`}
+function drawC(){if(!HAS)return;const F=FN[key],Ns=[10,20,50,100,200,500,1000],P=(arr,f)=>arr.map(n=>({x:n,y:f(n)}));let sets,lin=false;
+ if(cC)cC.destroy();
+ if(F.path==='D'){lin=true;sets=[{label:'Upper Darboux sum U',data:P(Ns,()=>1),borderColor:'#ff7aa8'},{label:'Lower Darboux sum L',data:P(Ns,()=>0),borderColor:'#4da3ff'},{label:'Lebesgue integral',data:P(Ns,()=>0),borderColor:'#5cf2c0',borderDash:[6,5]}];
+  $('capC').textContent='The Darboux bounds stay at 0 and 1 for every N: the Riemann integral does not exist. The Lebesgue integral is 0.'}
+ else if(F.path==='T'){lin=true;sets=[{label:'Upper Darboux sum U_N',data:P(Ns,thoU),borderColor:'#ff7aa8'},{label:'Riemann left sum S_N',data:P(Ns,thoL),borderColor:'#a56bff'},{label:'Lower sum L_N = 0 = Lebesgue',data:P(Ns,()=>0),borderColor:'#5cf2c0',borderDash:[6,5]}];
+  $('capC').textContent='U_N and S_N shrink to 0 (slowly, about like log N / N at best): Thomae is Riemann integrable with integral 0, the same value Lebesgue gives immediately.'}
+ else{const fl=v=>Math.max(1e-17,v),E=(fn)=>P(Ns,n=>fl(Math.abs(fn(n)-F.ex))),e10=Math.max(1e-17,Math.abs(riemL(F,10)-F.ex));
+  sets=[{label:'Riemann left sum',data:E(n=>riemL(F,n)),borderColor:'#a56bff',backgroundColor:'#a56bff'},{label:'Lebesgue sum',data:E(n=>lebSum(key,n)),borderColor:'#4da3ff',backgroundColor:'#4da3ff'}];
+  if(isFinite(F.f(F.a)))sets.splice(1,0,{label:'Trapezoid rule',data:E(n=>trap(F,n)),borderColor:'#ffc66b',backgroundColor:'#ffc66b'});
+  sets.push({label:'∝ 1/N',data:P(Ns,n=>e10*10/n),borderColor:'#ffffff55',borderDash:[4,4],pointRadius:0},{label:'∝ 1/N²',data:P(Ns,n=>e10*100/(n*n)),borderColor:'#ffffff33',borderDash:[2,4],pointRadius:0});
+  $('capC').textContent='Log-log error. Left/Lebesgue sums behave like 1/N, the trapezoid rule like 1/N² (floors at 10⁻¹⁷ are exact results). The singular 1/√x converges slowly because it is unbounded near 0. Step functions: even N puts a node exactly on the jump.'}
+ cC=new Chart($('cC'),{type:'line',data:{datasets:sets.map(s=>({borderWidth:2,pointRadius:3,...s}))},options:{...base,scales:{x:{type:'logarithmic',title:{display:true,text:'partition size N'}},y:lin?{type:'linear',min:-.05,max:1.05,title:{display:true,text:'value'}}:{type:'logarithmic',min:1e-17,max:10,title:{display:true,text:'absolute error'}}}}})}
+function ex1(full){drawAB();table();if(full)drawC()}
+$('fs').onchange=()=>{key=$('fs').value;ex1(true)};$('N').oninput=()=>{$('Nv').textContent=$('N').value;ex1(false)};$('run1').onclick=()=>ex1(true);
+// ---- exercise 2
+function ex2(){const z=+$('zz').value,N=+$('ni').value,T=+$('nt').value;$('zv').textContent=z.toFixed(2);$('niv').textContent=N;$('ntv').textContent=T;
+ const R=refPhi(z),rows=[['Trapezoid rule on φ',trapPhi(z,N),()=>trapPhi(z,N),(N+1)+' density evaluations, error O(h²)'],['Simpson rule on φ',simpPhi(z,N),()=>simpPhi(z,N),(N+1)+' density evaluations, error O(h⁴)'],['Maclaurin series of erf',PhiM(z,T),()=>PhiM(z,T),T+' terms (alternating)'],['½[1 + erf(z/√2)], stable erf',PhiE(z),()=>PhiE(z),'series (|x|<1.5) or continued fraction']];
+ $('tb2').innerHTML='<tr><th>Method</th><th>Φ(z)</th><th>Absolute error</th><th>Time (µs/eval)</th><th>Cost</th></tr>'+rows.map(([m,v,fn,c])=>`<tr><td>${m}</td><td>${v.toPrecision(12)}</td><td>${ex(Math.abs(v-R))}</td><td>${f3(tmr(fn,3000))}</td><td>${c}</td></tr>`).join('')+`<tr><td><b>Reference</b> (positive series, 400 terms)</td><td>${R.toPrecision(12)}</td><td>0</td><td>—</td><td>reference</td></tr>`;
+ $('kpi2').innerHTML=`<div><span>z</span><b>${z.toFixed(2)}</b></div><div><span>Φ(z) reference</span><b>${R.toFixed(8)}</b></div><div><span>Tail 1 − Φ(z)</span><b>${ex(1-R)}</b></div><div><span>φ(z)</span><b>${phi(z).toFixed(6)}</b></div>`;
+ const c1=Math.abs(refPhi(1)-0.8413447460685429),c2=Math.abs(refPhi(1.96)-0.9750021048517795);
+ $('chk').textContent=`Reference self-check against published values: |Φ(1) − 0.8413447460685429| = ${ex(c1)}, |Φ(1.96) − 0.9750021048517795| = ${ex(c2)}.`;
+ $('live').innerHTML=`LIVE · ${FN[key].name}<br>N = ${$('N').value} · z = ${z.toFixed(2)}`;
+ if(!HAS)return;
+ const ts=[];for(let t=-4;t<=z;t+=.05)ts.push({x:t,y:phi(t)});ts.push({x:z,y:phi(z)});const full=[];for(let t=-4;t<=4.001;t+=.05)full.push({x:t,y:phi(t)});
+ cD.data.datasets=[{label:'φ(t)',data:full,borderColor:'#5cf2c0',borderWidth:2},{label:'Φ(z) = area up to z',data:ts,borderColor:'rgba(165,107,255,0)',backgroundColor:'rgba(165,107,255,.4)',fill:'origin'}];cD.update('none');
+ const fl=v=>Math.max(1e-17,v),Ns=[2,4,6,8,10,16,20,30,40,60,80,100,150,200];
+ cE.data.datasets=[{label:'Trapezoid',data:Ns.map(n=>({x:n,y:fl(Math.abs(trapPhi(z,n)-R))})),borderColor:'#ffc66b',backgroundColor:'#ffc66b'},{label:'Simpson',data:Ns.map(n=>({x:n,y:fl(Math.abs(simpPhi(z,n)-R))})),borderColor:'#a56bff',backgroundColor:'#a56bff'}];cE.update('none');
+ const Ts=Array.from({length:40},(_,i)=>i+1);
+ cF.data.datasets=[{label:'Maclaurin series of erf',data:Ts.map(t=>({x:t,y:fl(Math.abs(PhiM(z,t)-R))})),borderColor:'#ff7aa8',backgroundColor:'#ff7aa8'},{label:'positive-term (Kummer) form',data:Ts.map(t=>({x:t,y:fl(Math.abs(refPhi(z,t)-R))})),borderColor:'#5cf2c0',backgroundColor:'#5cf2c0'}];cF.update('none')}
+['zz','ni','nt'].forEach(i=>$(i).oninput=ex2);$('run2').onclick=ex2;
+ex1(true);ex2();
+</script></body></html>
